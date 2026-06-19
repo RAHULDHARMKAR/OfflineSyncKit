@@ -1,0 +1,75 @@
+
+# Built application files
+*.apk
+*.aab
+
+# Gradle
+.gradle/
+build/
+**/build/
+
+# Local configuration
+local.properties
+
+# Android Studio
+.idea/
+*.iml
+
+# Keystore files
+*.jks
+*.keystore
+
+# Logs
+*.log
+
+# Navigation editor temp files
+.navigation/
+
+# Captures
+captures/
+
+# External native build
+.externalNativeBuild/
+.cxx/
+
+# Generated files
+generated/
+out/
+
+# Kotlin
+.kotlin/
+
+# Mac
+.DS_Store
+
+# Linux
+.directory
+
+# Windows
+Thumbs.db
+
+# Firebase
+google-services.json
+
+# Maven local generated artifacts
+.m2/
+
+# Lint
+lint-baseline.xml
+
+# Test reports
+test-results/
+reports/
+
+# Room schema exports (optional)
+schemas/
+
+# KSP
+.ksp/
+
+# KAPT
+kapt/
+
+# Temporary
+tmp/
+temp/
