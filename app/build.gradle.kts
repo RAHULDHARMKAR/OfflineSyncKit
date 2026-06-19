@@ -60,7 +60,7 @@ dependencies {
     // Room
     implementation("androidx.room:room-runtime:2.7.1")
     implementation("androidx.room:room-ktx:2.7.1")
-    implementation("com.rahuldharmkar:offlinesynckit:1.0.0")
+    implementation(project(":offlinesynckit"))
     ksp("androidx.room:room-compiler:2.7.1")
 
     // WorkManager
