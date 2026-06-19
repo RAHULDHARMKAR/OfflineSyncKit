@@ -1,5 +1,10 @@
 # OfflineSyncKit
 
+
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Platform](https://img.shields.io/badge/platform-Android-brightgreen.svg)
+![Version](https://img.shields.io/badge/version-v1.0.0-blue.svg)
+
 A lightweight, production-ready Offline First Synchronization SDK for Android.
 
 OfflineSyncKit helps Android applications reliably store local changes and synchronize them with remote servers when connectivity becomes available.
@@ -117,10 +122,24 @@ Configurable logging support for debugging and monitoring.
 
 # Installation
 
-Add OfflineSyncKit dependency.
+Add JitPack repository:
 
-```gradle
-implementation("com.rahuldharmkar:offlinesynckit:x.x.x")
+```kotlin
+dependencyResolutionManagement {
+    repositories {
+        google()
+        mavenCentral()
+        maven { url = uri("https://jitpack.io") }
+    }
+}
+```
+
+Add dependency:
+
+```kotlin
+dependencies {
+    implementation("com.github.RAHULDHARMKAR:OfflineSyncKit:v1.0.0")
+}
 ```
 
 ---
