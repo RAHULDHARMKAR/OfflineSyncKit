@@ -15,7 +15,9 @@ data class SyncConfig(
     val syncPaused: Boolean = false,
     val syncDirection: SyncDirection = SyncDirection.PUSH,
     val conflictStrategy: SyncConflictStrategy = SyncConflictStrategy.MANUAL,
-    val conflictResolver: SyncConflictResolver? = null
+    val conflictResolver: SyncConflictResolver? = null,
+    val serializerRegistry: SyncSerializerRegistry = SyncSerializerRegistry(),
+    val interceptors: List<SyncInterceptor> = emptyList()
 ) {
     init {
         require(syncBatchSize > 0) {

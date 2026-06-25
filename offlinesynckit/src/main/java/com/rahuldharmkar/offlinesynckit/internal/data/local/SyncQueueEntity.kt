@@ -3,7 +3,7 @@ package com.rahuldharmkar.offlinesynckit.internal.data.local
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
-import com.rahuldharmkar.offlinesynckit.core.SyncStatus
+
 
 @Entity(tableName = "sync_queue")
 internal data class SyncQueueEntity(
@@ -13,7 +13,7 @@ internal data class SyncQueueEntity(
     val entityName: String,
     val entityId: String,
 
-    val operation: com.rahuldharmkar.offlinesynckit.core.SyncOperation,
+    val operation: SyncOperation,
     val payload: String,
 
     val status: com.rahuldharmkar.offlinesynckit.core.SyncStatus = com.rahuldharmkar.offlinesynckit.core.SyncStatus.PENDING,

@@ -17,6 +17,10 @@ import com.rahuldharmkar.offlinesynckit.core.SyncMergePolicy
 import com.rahuldharmkar.offlinesynckit.core.SyncRetryPolicy
 import com.rahuldharmkar.offlinesynckit.sampleApp.CustomerSyncSampleScreen
 import com.rahuldharmkar.offlinesynckit.sampleApp.FakeCustomerApiAdapter
+import com.rahuldharmkar.offlinesynckit.core.SyncSerializer
+import com.rahuldharmkar.offlinesynckit.core.SyncSerializerRegistry
+import com.rahuldharmkar.offlinesynckit.sampleApp.Customer
+import com.rahuldharmkar.offlinesynckit.sampleApp.CustomerJsonSerializer
 
 class MainActivity : ComponentActivity() {
 
@@ -24,6 +28,15 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        val serializerRegistry = SyncSerializerRegistry().apply {
+            register(
+                Customer::class,
+                SyncSerializer<Customer> { customer ->
+                    CustomerJsonSerializer.toJson(customer)
+                }
+            )
+        }
 
         syncKit = OfflineSyncKit.create(
             context = applicationContext,
@@ -44,7 +57,8 @@ class MainActivity : ComponentActivity() {
                 },
                 eventListener = SyncEventListener { event ->
                     Log.d("OfflineSyncEvent", event.toString())
-                }
+                },
+                serializerRegistry = serializerRegistry,
             )
         )
 

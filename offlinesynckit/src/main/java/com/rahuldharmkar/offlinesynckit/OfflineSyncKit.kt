@@ -8,6 +8,14 @@ import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.rahuldharmkar.offlinesynckit.api.SyncApiAdapter
+import com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter
+import com.rahuldharmkar.offlinesynckit.core.SyncApiResultSummary
+import com.rahuldharmkar.offlinesynckit.core.SyncConfig
+import com.rahuldharmkar.offlinesynckit.core.SyncOperation
+import com.rahuldharmkar.offlinesynckit.core.SyncQueueItem
+import com.rahuldharmkar.offlinesynckit.core.SyncSerializer
+import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncDatabase
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
 import com.rahuldharmkar.offlinesynckit.internal.data.mapper.toDomain
@@ -19,12 +27,13 @@ import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.reflect.KClass
 
 class OfflineSyncKit private constructor(
     private val context: Context,
-    private val apiAdapter: com.rahuldharmkar.offlinesynckit.api.SyncApiAdapter,
-    private val pullAdapter: com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter?,
-    private val config: com.rahuldharmkar.offlinesynckit.core.SyncConfig,
+    private val apiAdapter: SyncApiAdapter,
+    private val pullAdapter: SyncPullAdapter?,
+    private val config: SyncConfig,
 ) {
     private val dao = SyncDatabase.getInstance(context).syncQueueDao()
     private val networkMonitor = NetworkMonitor(context)
@@ -154,6 +163,12 @@ class OfflineSyncKit private constructor(
                 try {
                     dao.updateStatus(item.id, com.rahuldharmkar.offlinesynckit.core.SyncStatus.SYNCING)
 
+                    val queueItem = item.toQueueItem()
+
+                    config.interceptors.forEach { interceptor ->
+                        interceptor.beforeSync(queueItem)
+                    }
+
                     log("Syncing queueId=${item.id} entityName=${item.entityName} entityId=${item.entityId}")
 
                     config.eventListener?.onEvent(
@@ -185,8 +200,18 @@ class OfflineSyncKit private constructor(
                                     entityId = item.entityId
                                 )
                             )
-                        }
 
+                            config.interceptors.forEach { interceptor ->
+                                interceptor.afterSync(
+                                    queueItem,
+                                    SyncApiResultSummary(
+                                        success = true,
+                                        conflict = false,
+                                        finalStatus = SyncStatus.SYNCED
+                                    )
+                                )
+                            }
+                        }
                         result.isConflict -> {
                             val resolved = handleConflict(
                                 item = item,
@@ -198,6 +223,17 @@ class OfflineSyncKit private constructor(
                             } else {
                                 conflictCount++
                             }
+
+                            config.interceptors.forEach { interceptor ->
+                                interceptor.afterSync(
+                                    queueItem,
+                                    SyncApiResultSummary(
+                                        success = false,
+                                        conflict = true,
+                                        finalStatus = SyncStatus.CONFLICT
+                                    )
+                                )
+                            }
                         }
 
                         else -> {
@@ -205,6 +241,8 @@ class OfflineSyncKit private constructor(
                                 item = item,
                                 error = result.errorMessage ?: "Unknown sync error"
                             )
+
+
 
                             if (status == com.rahuldharmkar.offlinesynckit.core.SyncStatus.GIVE_UP) {
                                 giveUpCount++
@@ -218,6 +256,9 @@ class OfflineSyncKit private constructor(
                         item = item,
                         error = e.message ?: "Unexpected sync error"
                     )
+
+
+
 
                     if (status == com.rahuldharmkar.offlinesynckit.core.SyncStatus.GIVE_UP) {
                         giveUpCount++
@@ -530,14 +571,18 @@ class OfflineSyncKit private constructor(
         }
     }
 
+    /**
+     * Preferred serializer API.
+     */
+
     suspend fun <T> enqueueObject(
         entityName: String,
         entityId: String,
-        operation: com.rahuldharmkar.offlinesynckit.core.SyncOperation,
+        operation: SyncOperation,
         entity: T,
-        serializer: (T) -> String
+        serializer: SyncSerializer<T>
     ): Long {
-        val payload = serializer(entity)
+        val payload = serializer.serialize(entity)
 
         return enqueue(
             entityName = entityName,
@@ -547,21 +592,60 @@ class OfflineSyncKit private constructor(
         )
     }
 
-
     suspend fun <T> enqueueObjectAndSyncIfOnline(
         entityName: String,
         entityId: String,
-        operation: com.rahuldharmkar.offlinesynckit.core.SyncOperation,
+        operation: SyncOperation,
         entity: T,
-        serializer: (T) -> String
+        serializer: SyncSerializer<T>
     ): Long {
-        val payload = serializer(entity)
+        val payload = serializer.serialize(entity)
 
         return enqueueAndSyncIfOnline(
             entityName = entityName,
             entityId = entityId,
             operation = operation,
             payload = payload
+        )
+    }
+
+
+
+    /**
+     * Legacy serializer API.
+     * Kept for backward compatibility.
+     */
+
+    suspend fun <T> enqueueObject(
+        entityName: String,
+        entityId: String,
+        operation: SyncOperation,
+        entity: T,
+        serializer: (T) -> String
+    ): Long {
+        return enqueueObject(
+            entityName = entityName,
+            entityId = entityId,
+            operation = operation,
+            entity = entity,
+            serializer = SyncSerializer(serializer)
+        )
+    }
+
+
+    suspend fun <T> enqueueObjectAndSyncIfOnline(
+        entityName: String,
+        entityId: String,
+        operation: SyncOperation,
+        entity: T,
+        serializer: (T) -> String
+    ): Long {
+        return enqueueObjectAndSyncIfOnline(
+            entityName = entityName,
+            entityId = entityId,
+            operation = operation,
+            entity = entity,
+            serializer = SyncSerializer(serializer)
         )
     }
 
@@ -654,6 +738,48 @@ class OfflineSyncKit private constructor(
                 true
             }
         }
+    }
+
+    suspend fun <T : Any> enqueueObject(
+        entityName: String,
+        entityId: String,
+        operation: SyncOperation,
+        entity: T,
+        type: KClass<T>
+    ): Long {
+        val serializer = config.serializerRegistry.get(type)
+            ?: error("No SyncSerializer registered for ${type.simpleName}")
+
+        return enqueueObject(
+            entityName = entityName,
+            entityId = entityId,
+            operation = operation,
+            entity = entity,
+            serializer = serializer
+        )
+    }
+
+    suspend  fun < T : Any> enqueueObjectAndSyncIfOnline(
+        entityName: String,
+        entityId: String,
+        operation: SyncOperation,
+        entity: T,
+        type: KClass<T>
+    ): Long {
+        val serializer = config.serializerRegistry.get(type)
+            ?: error("No SyncSerializer registered for ${type.simpleName}")
+
+        return enqueueObjectAndSyncIfOnline(
+            entityName = entityName,
+            entityId = entityId,
+            operation = operation,
+            entity = entity,
+            serializer = serializer
+        )
+    }
+
+    private fun SyncQueueEntity.toQueueItem(): SyncQueueItem {
+        return this.toDomain()
     }
 
 }

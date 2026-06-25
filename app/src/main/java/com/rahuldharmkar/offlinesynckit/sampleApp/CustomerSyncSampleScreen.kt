@@ -75,9 +75,9 @@ fun CustomerSyncSampleScreen(
                     syncKit.enqueueObjectAndSyncIfOnline(
                         entityName = "customer",
                         entityId = customer.id,
-                        operation = com.rahuldharmkar.offlinesynckit.core.SyncOperation.CREATE,
+                        operation = SyncOperation.CREATE,
                         entity = customer,
-                        serializer = CustomerJsonSerializer::toJson
+                        type = Customer::class
                     )
                 }
             }
