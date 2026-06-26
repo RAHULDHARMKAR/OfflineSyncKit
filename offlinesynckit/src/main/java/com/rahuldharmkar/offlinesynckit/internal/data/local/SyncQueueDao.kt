@@ -178,4 +178,20 @@ internal interface SyncQueueDao {
     suspend fun getAllItems(): List<SyncQueueEntity>
 
 
+    @Query("""
+    SELECT * FROM sync_queue
+    WHERE (:status IS NULL OR status = :status)
+      AND (:entityName IS NULL OR entityName = :entityName)
+      AND (:operation IS NULL OR operation = :operation)
+    ORDER BY createdAt ASC
+    LIMIT :limit
+""")
+    suspend fun queryQueue(
+        status: SyncStatus?,
+        entityName: String?,
+        operation: SyncOperation?,
+        limit: Int
+    ): List<SyncQueueEntity>
+
+
 }

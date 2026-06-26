@@ -29,6 +29,8 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
 import com.rahuldharmkar.offlinesynckit.internal.engine.SyncEngine
+import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
+import com.rahuldharmkar.offlinesynckit.internal.engine.QueueQueryEngine
 
 class OfflineSyncKit private constructor(
     private val context: Context,
@@ -606,6 +608,16 @@ class OfflineSyncKit private constructor(
     suspend fun observeQueueSnapshot(): List<SyncQueueItem> {
         return dao.getAllItems()
             .map { it.toDomain() }
+    }
+
+    private val queueQueryEngine = QueueQueryEngine(
+        dao = dao
+    )
+
+    suspend fun queryQueue(
+        filter: SyncQueueFilter = SyncQueueFilter()
+    ): List<SyncQueueItem> {
+        return queueQueryEngine.queryQueue(filter)
     }
 
 }
