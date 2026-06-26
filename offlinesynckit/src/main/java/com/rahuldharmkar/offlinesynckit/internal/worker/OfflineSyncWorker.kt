@@ -14,7 +14,6 @@ internal class OfflineSyncWorker(
 
     override suspend fun doWork(): Result {
         return try {
-
             val syncKit = OfflineSyncKit.create(
                 context = applicationContext,
                 apiAdapter = OfflineSyncConfig.getApiAdapter(),

@@ -1,14 +1,11 @@
 package com.rahuldharmkar.offlinesynckit.api
 
-import com.rahuldharmkar.offlinesynckit.core.SyncOperation
+import com.rahuldharmkar.offlinesynckit.core.SyncRequest
 
-interface SyncApiAdapter {
+fun interface SyncApiAdapter {
 
     suspend fun sync(
-        entityName: String,
-        entityId: String,
-        operation: SyncOperation,
-        payload: String
+        request: SyncRequest
     ): SyncApiResult
 }
 

@@ -17,7 +17,9 @@ data class SyncConfig(
     val conflictStrategy: SyncConflictStrategy = SyncConflictStrategy.MANUAL,
     val conflictResolver: SyncConflictResolver? = null,
     val serializerRegistry: SyncSerializerRegistry = SyncSerializerRegistry(),
-    val interceptors: List<SyncInterceptor> = emptyList()
+    val interceptors: List<SyncInterceptor> = emptyList(),
+    val authTokenProvider: SyncAuthTokenProvider? = null,
+    val headerProvider: SyncHeaderProvider? = null
 ) {
     init {
         require(syncBatchSize > 0) {

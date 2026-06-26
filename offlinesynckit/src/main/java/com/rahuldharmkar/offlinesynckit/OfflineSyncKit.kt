@@ -9,11 +9,15 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.rahuldharmkar.offlinesynckit.api.SyncApiAdapter
+import com.rahuldharmkar.offlinesynckit.api.SyncApiResult
 import com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter
 import com.rahuldharmkar.offlinesynckit.core.SyncApiResultSummary
 import com.rahuldharmkar.offlinesynckit.core.SyncConfig
+import com.rahuldharmkar.offlinesynckit.core.SyncDirection
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueItem
+import com.rahuldharmkar.offlinesynckit.core.SyncRequest
+import com.rahuldharmkar.offlinesynckit.core.SyncRunResult
 import com.rahuldharmkar.offlinesynckit.core.SyncSerializer
 import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncDatabase
@@ -28,6 +32,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
+import com.rahuldharmkar.offlinesynckit.internal.sync.SyncEngine
 
 class OfflineSyncKit private constructor(
     private val context: Context,
@@ -113,176 +118,41 @@ class OfflineSyncKit private constructor(
             }
     }
 
-    suspend fun syncNow(limit: Int = config.syncBatchSize): com.rahuldharmkar.offlinesynckit.core.SyncRunResult {
+    suspend fun syncNow(limit: Int = config.syncBatchSize): SyncRunResult {
         SyncValidator.validateSyncLimit(limit)
 
         if (isSyncPaused) {
             log("Sync skipped because sync is paused")
-            return com.rahuldharmkar.offlinesynckit.core.SyncRunResult.empty()
+            return SyncRunResult.empty()
         }
 
         if (syncMutex.isLocked) {
             log("Sync skipped because another sync is already running")
-            return com.rahuldharmkar.offlinesynckit.core.SyncRunResult.empty()
+            return SyncRunResult.empty()
         }
 
         return syncMutex.withLock {
-
             when (config.syncDirection) {
-                com.rahuldharmkar.offlinesynckit.core.SyncDirection.PUSH -> {
+                SyncDirection.PUSH -> {
                     log("Running PUSH sync")
                 }
 
-                com.rahuldharmkar.offlinesynckit.core.SyncDirection.PULL -> {
+                SyncDirection.PULL -> {
                     log("Running PULL sync")
                     runPullSync()
-                    return@withLock com.rahuldharmkar.offlinesynckit.core.SyncRunResult.empty()
+                    return@withLock SyncRunResult.empty()
                 }
 
-                com.rahuldharmkar.offlinesynckit.core.SyncDirection.BOTH -> {
+                SyncDirection.BOTH -> {
                     log("Running BOTH sync. Pull first, then push.")
                     runPullSync()
                 }
             }
 
-
-            resetStaleSyncingItems()
-
-
-
-            val items = dao.getPendingItems(limit = limit)
-
-            var successCount = 0
-            var failedCount = 0
-            var conflictCount = 0
-            var giveUpCount = 0
-
-            log("Sync started. itemCount=${items.size}")
-
-            for (item in items) {
-                try {
-                    dao.updateStatus(item.id, com.rahuldharmkar.offlinesynckit.core.SyncStatus.SYNCING)
-
-                    val queueItem = item.toQueueItem()
-
-                    config.interceptors.forEach { interceptor ->
-                        interceptor.beforeSync(queueItem)
-                    }
-
-                    log("Syncing queueId=${item.id} entityName=${item.entityName} entityId=${item.entityId}")
-
-                    config.eventListener?.onEvent(
-                        com.rahuldharmkar.offlinesynckit.core.SyncEvent.Started(
-                            queueId = item.id,
-                            entityName = item.entityName,
-                            entityId = item.entityId
-                        )
-                    )
-
-                    val result = apiAdapter.sync(
-                        entityName = item.entityName,
-                        entityId = item.entityId,
-                        operation = item.operation,
-                        payload = item.payload
-                    )
-
-                    when {
-                        result.success -> {
-                            dao.updateStatus(item.id, com.rahuldharmkar.offlinesynckit.core.SyncStatus.SYNCED)
-                            successCount++
-
-                            log("Sync success queueId=${item.id}")
-
-                            config.eventListener?.onEvent(
-                                com.rahuldharmkar.offlinesynckit.core.SyncEvent.Success(
-                                    queueId = item.id,
-                                    entityName = item.entityName,
-                                    entityId = item.entityId
-                                )
-                            )
-
-                            config.interceptors.forEach { interceptor ->
-                                interceptor.afterSync(
-                                    queueItem,
-                                    SyncApiResultSummary(
-                                        success = true,
-                                        conflict = false,
-                                        finalStatus = SyncStatus.SYNCED
-                                    )
-                                )
-                            }
-                        }
-                        result.isConflict -> {
-                            val resolved = handleConflict(
-                                item = item,
-                                serverPayload = result.serverPayload
-                            )
-
-                            if (resolved) {
-                                failedCount++
-                            } else {
-                                conflictCount++
-                            }
-
-                            config.interceptors.forEach { interceptor ->
-                                interceptor.afterSync(
-                                    queueItem,
-                                    SyncApiResultSummary(
-                                        success = false,
-                                        conflict = true,
-                                        finalStatus = SyncStatus.CONFLICT
-                                    )
-                                )
-                            }
-                        }
-
-                        else -> {
-                            val status = markFailedOrGiveUp(
-                                item = item,
-                                error = result.errorMessage ?: "Unknown sync error"
-                            )
-
-
-
-                            if (status == com.rahuldharmkar.offlinesynckit.core.SyncStatus.GIVE_UP) {
-                                giveUpCount++
-                            } else {
-                                failedCount++
-                            }
-                        }
-                    }
-                } catch (e: Exception) {
-                    val status = markFailedOrGiveUp(
-                        item = item,
-                        error = e.message ?: "Unexpected sync error"
-                    )
-
-
-
-
-                    if (status == com.rahuldharmkar.offlinesynckit.core.SyncStatus.GIVE_UP) {
-                        giveUpCount++
-                    } else {
-                        failedCount++
-                    }
-                }
-            }
-
-            if (config.autoClearSyncedItems) {
-                clearOldSyncedItems()
-            }
-
-            log("Sync completed.")
-
-            com.rahuldharmkar.offlinesynckit.core.SyncRunResult(
-                totalProcessed = items.size,
-                successCount = successCount,
-                failedCount = failedCount,
-                conflictCount = conflictCount,
-                giveUpCount = giveUpCount
-            )
+            syncEngine.syncNow(limit)
         }
     }
+
     fun scheduleAutoSync() {
         val constraints = Constraints.Builder()
             .setRequiredNetworkType(NetworkType.CONNECTED)
@@ -366,46 +236,7 @@ class OfflineSyncKit private constructor(
         log("Periodic auto sync disabled")
     }
 
-    private suspend fun markFailedOrGiveUp(
-        item: SyncQueueEntity,
-        error: String
-    ): com.rahuldharmkar.offlinesynckit.core.SyncStatus {
-        val nextRetryCount = item.retryCount + 1
 
-        val finalStatus = if (nextRetryCount >= config.retryPolicy.maxRetryCount) {
-            com.rahuldharmkar.offlinesynckit.core.SyncStatus.GIVE_UP
-        } else {
-            com.rahuldharmkar.offlinesynckit.core.SyncStatus.FAILED
-        }
-
-        dao.markFailed(
-            id = item.id,
-            status = finalStatus,
-            error = error
-        )
-
-        log("Sync failed queueId=${item.id} status=$finalStatus retryCount=$nextRetryCount error=$error")
-
-        val event = if (finalStatus == com.rahuldharmkar.offlinesynckit.core.SyncStatus.GIVE_UP) {
-            com.rahuldharmkar.offlinesynckit.core.SyncEvent.GiveUp(
-                queueId = item.id,
-                entityName = item.entityName,
-                entityId = item.entityId,
-                error = error
-            )
-        } else {
-            com.rahuldharmkar.offlinesynckit.core.SyncEvent.Failed(
-                queueId = item.id,
-                entityName = item.entityName,
-                entityId = item.entityId,
-                error = error
-            )
-        }
-
-        config.eventListener?.onEvent(event)
-
-        return finalStatus
-    }
 
     private suspend fun applyMergePolicy(
         entityName: String,
@@ -448,9 +279,9 @@ class OfflineSyncKit private constructor(
 
         fun create(
             context: Context,
-            apiAdapter: com.rahuldharmkar.offlinesynckit.api.SyncApiAdapter,
-            pullAdapter: com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter? = null,
-            config: com.rahuldharmkar.offlinesynckit.core.SyncConfig = com.rahuldharmkar.offlinesynckit.core.SyncConfig()
+            apiAdapter: SyncApiAdapter,
+            pullAdapter: SyncPullAdapter? = null,
+            config: SyncConfig = SyncConfig()
         ): OfflineSyncKit {
             OfflineSyncConfig.initialize(
                 adapter = apiAdapter,
@@ -475,16 +306,7 @@ class OfflineSyncKit private constructor(
         }
     }
 
-    private suspend fun resetStaleSyncingItems() {
-        val staleBefore = System.currentTimeMillis() -
-                TimeUnit.MINUTES.toMillis(config.staleSyncingTimeoutMinutes)
 
-        dao.resetStaleSyncingItems(
-            staleBefore = staleBefore
-        )
-
-        log("Stale SYNCING items reset if older than ${config.staleSyncingTimeoutMinutes} minutes")
-    }
 
     suspend fun deleteItem(id: Long) {
         dao.deleteById(id)
@@ -496,16 +318,7 @@ class OfflineSyncKit private constructor(
         log("Cleared all queue items")
     }
 
-    private suspend fun clearOldSyncedItems() {
-        val olderThan = System.currentTimeMillis() -
-                TimeUnit.MINUTES.toMillis(config.syncedItemRetentionMinutes)
 
-        dao.deleteSyncedOlderThan(
-            olderThan = olderThan
-        )
-
-        log("Old synced items cleared. retentionMinutes=${config.syncedItemRetentionMinutes}")
-    }
 
     fun pauseSync() {
         isSyncPaused = true
@@ -649,96 +462,7 @@ class OfflineSyncKit private constructor(
         )
     }
 
-    private suspend fun handleConflict(
-        item: SyncQueueEntity,
-        serverPayload: String?
-    ): Boolean {
-        log("Sync conflict queueId=${item.id}")
 
-        val conflict = com.rahuldharmkar.offlinesynckit.core.SyncConflict(
-            queueId = item.id,
-            entityName = item.entityName,
-            entityId = item.entityId,
-            operation = item.operation,
-            localPayload = item.payload,
-            serverPayload = serverPayload
-        )
-
-        val resolution = config.conflictResolver?.resolve(conflict)
-            ?: when (config.conflictStrategy) {
-                com.rahuldharmkar.offlinesynckit.core.SyncConflictStrategy.LOCAL_WINS -> com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.KeepLocal
-                com.rahuldharmkar.offlinesynckit.core.SyncConflictStrategy.SERVER_WINS -> com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.KeepServer
-                com.rahuldharmkar.offlinesynckit.core.SyncConflictStrategy.MANUAL -> com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.MarkManual
-            }
-
-        return when (resolution) {
-            com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.KeepLocal -> {
-                dao.updateStatus(item.id, com.rahuldharmkar.offlinesynckit.core.SyncStatus.FAILED)
-
-                config.eventListener?.onEvent(
-                    com.rahuldharmkar.offlinesynckit.core.SyncEvent.Failed(
-                        queueId = item.id,
-                        entityName = item.entityName,
-                        entityId = item.entityId,
-                        error = "Conflict resolved with LOCAL_WINS. Item will retry."
-                    )
-                )
-
-                log("Conflict resolved LOCAL_WINS queueId=${item.id}")
-                true
-            }
-
-            com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.KeepServer -> {
-                dao.updateStatus(item.id, com.rahuldharmkar.offlinesynckit.core.SyncStatus.SYNCED)
-
-                config.eventListener?.onEvent(
-                    com.rahuldharmkar.offlinesynckit.core.SyncEvent.Success(
-                        queueId = item.id,
-                        entityName = item.entityName,
-                        entityId = item.entityId
-                    )
-                )
-
-                log("Conflict resolved SERVER_WINS queueId=${item.id}")
-                true
-            }
-
-            com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.MarkManual -> {
-                dao.updateStatus(item.id, com.rahuldharmkar.offlinesynckit.core.SyncStatus.CONFLICT)
-
-                config.eventListener?.onEvent(
-                    com.rahuldharmkar.offlinesynckit.core.SyncEvent.Conflict(
-                        queueId = item.id,
-                        entityName = item.entityName,
-                        entityId = item.entityId
-                    )
-                )
-
-                log("Conflict marked MANUAL queueId=${item.id}")
-                false
-            }
-
-            is com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution.RetryWithPayload -> {
-                dao.updatePayloadAndStatus(
-                    id = item.id,
-                    payload = resolution.payload,
-                    status = com.rahuldharmkar.offlinesynckit.core.SyncStatus.PENDING
-                )
-
-                config.eventListener?.onEvent(
-                    com.rahuldharmkar.offlinesynckit.core.SyncEvent.Failed(
-                        queueId = item.id,
-                        entityName = item.entityName,
-                        entityId = item.entityId,
-                        error = "Conflict resolved with merged payload. Item will retry."
-                    )
-                )
-
-                log("Conflict resolved with merged payload queueId=${item.id}")
-                true
-            }
-        }
-    }
 
     suspend fun <T : Any> enqueueObject(
         entityName: String,
@@ -782,4 +506,12 @@ class OfflineSyncKit private constructor(
         return this.toDomain()
     }
 
+
+
+    private val syncEngine = SyncEngine(
+        dao = dao,
+        apiAdapter = apiAdapter,
+        config = config,
+        log = ::log
+    )
 }

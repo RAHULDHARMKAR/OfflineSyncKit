@@ -3,7 +3,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Android-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-v1.1.0-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.2.0--dev-blue.svg)
 
 A lightweight, production-ready Offline First Synchronization SDK for Android.
 
@@ -20,6 +20,12 @@ Designed for:
 * Enterprise Offline Applications
 
 ---
+
+# Why OfflineSyncKit?
+
+OfflineSyncKit is designed for Android applications that must continue working without internet connectivity.
+
+Instead of losing user actions while offline, OfflineSyncKit automatically stores operations locally and synchronizes them when connectivity is restored.
 
 # Features
 
@@ -144,30 +150,26 @@ dependencies {
 
 ---
 
-# Basic Setup
+# Quick Start
 
 ```kotlin
-val syncKit = OfflineSyncKit.create(
-    context = applicationContext,
-    apiAdapter = object : SyncApiAdapter {
+val syncKit = SyncClient.Builder(applicationContext)
+    .apiAdapter(
+        object : SyncApiAdapter {
 
-        override suspend fun sync(
-            entityName: String,
-            entityId: String,
-            operation: SyncOperation,
-            payload: String
-        ): SyncApiResult {
+            override suspend fun sync(
+                request: SyncRequest
+            ): SyncApiResult {
 
-            return SyncApiResult(
-                success = true
-            )
+                return SyncApiResult(
+                    success = true
+                )
+            }
         }
-    }
-)
+    )
+    .build()
 ```
-
 ---
-
 # Enqueue Item
 
 ```kotlin
@@ -236,13 +238,14 @@ registry.register(
 Pass the registry into `SyncConfig`:
 
 ```kotlin
-val syncKit = OfflineSyncKit.create(
-    context = applicationContext,
-    apiAdapter = apiAdapter,
-    config = SyncConfig(
-        serializerRegistry = registry
+val syncKit = SyncClient.Builder(applicationContext)
+    .apiAdapter(apiAdapter)
+    .config(
+        SyncConfig(
+            serializerRegistry = registry
+        )
     )
-)
+    .build()
 ```
 
 Now enqueue objects without passing a serializer every time:
@@ -377,6 +380,45 @@ SyncDirection.BOTH
 
 ---
 
+# Enterprise Configuration
+
+Configure authentication and custom request headers.
+
+```kotlin
+val syncKit = SyncClient.Builder(applicationContext)
+    .apiAdapter(apiAdapter)
+    .config(
+        SyncConfig(
+            authTokenProvider = SyncAuthTokenProvider {
+                "Bearer your-token"
+            },
+            headerProvider = SyncHeaderProvider {
+                mapOf(
+                    "X-App-Version" to "1.2.0",
+                    "X-Device" to "Android"
+                )
+            }
+        )
+    )
+    .build()
+```
+---
+
+# Sync Request
+
+Every synchronization request is represented by a `SyncRequest`.
+
+It contains:
+
+- Entity information
+- Payload
+- Authentication token
+- Custom headers
+- Retry information
+- Metadata
+
+This makes the SDK easy to extend without changing the public API.
+
 # Architecture
 
 OfflineSyncKit uses:
@@ -391,15 +433,29 @@ OfflineSyncKit uses:
 
 # Roadmap
 
-Upcoming features:
+### v1.2.x
+- Builder API
+- Enterprise Networking
+- SyncRequest
+- Authentication Provider
+- Header Provider
 
-* Maven Central Publishing
-* Kotlin Serialization Integration
-* Advanced Conflict Merge Engine
-* Encryption Support
-* Multi-Tenant Sync Support
-* Dashboard Module
-* Analytics Module
+### v1.3.x
+- Payload Encryption
+- Secure Storage
+- Redacted Logging
+
+### v1.4.x
+- Queue Inspector
+- Statistics Dashboard
+- Debug Utilities
+
+### v2.0.0
+- Push Sync
+- Pull Sync
+- Bidirectional Sync
+- Delta Synchronization
+- Conflict Merge Engine
 
 
 
