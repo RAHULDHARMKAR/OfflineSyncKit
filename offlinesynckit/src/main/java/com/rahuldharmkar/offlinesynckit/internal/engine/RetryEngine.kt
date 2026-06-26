@@ -1,4 +1,4 @@
-package com.rahuldharmkar.offlinesynckit.internal.retry
+package com.rahuldharmkar.offlinesynckit.internal.engine
 
 import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import com.rahuldharmkar.offlinesynckit.core.SyncRetryPolicy

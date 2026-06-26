@@ -9,17 +9,13 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.rahuldharmkar.offlinesynckit.api.SyncApiAdapter
-import com.rahuldharmkar.offlinesynckit.api.SyncApiResult
 import com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter
-import com.rahuldharmkar.offlinesynckit.core.SyncApiResultSummary
 import com.rahuldharmkar.offlinesynckit.core.SyncConfig
 import com.rahuldharmkar.offlinesynckit.core.SyncDirection
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueItem
-import com.rahuldharmkar.offlinesynckit.core.SyncRequest
 import com.rahuldharmkar.offlinesynckit.core.SyncRunResult
 import com.rahuldharmkar.offlinesynckit.core.SyncSerializer
-import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncDatabase
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
 import com.rahuldharmkar.offlinesynckit.internal.data.mapper.toDomain
@@ -32,7 +28,7 @@ import java.util.concurrent.TimeUnit
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.reflect.KClass
-import com.rahuldharmkar.offlinesynckit.internal.sync.SyncEngine
+import com.rahuldharmkar.offlinesynckit.internal.engine.SyncEngine
 
 class OfflineSyncKit private constructor(
     private val context: Context,
