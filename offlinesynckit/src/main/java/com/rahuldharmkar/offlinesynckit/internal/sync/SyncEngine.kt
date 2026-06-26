@@ -15,6 +15,7 @@ import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueDao
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
 import com.rahuldharmkar.offlinesynckit.internal.data.mapper.toDomain
 import java.util.concurrent.TimeUnit
+import com.rahuldharmkar.offlinesynckit.internal.retry.RetryEngine
 
 internal class SyncEngine(
     private val dao: SyncQueueDao,
@@ -109,9 +110,15 @@ internal class SyncEngine(
                     }
 
                     else -> {
-                        val status = markFailedOrGiveUp(
+                        val status = retryEngine.markFailedOrGiveUp(
                             item = item,
                             error = result.errorMessage ?: "Unknown sync error"
+                        )
+
+                        dispatchFailureEvent(
+                            item = item,
+                            error = result.errorMessage ?: "Unknown sync error",
+                            status = status
                         )
 
                         if (status == SyncStatus.GIVE_UP) {
@@ -129,9 +136,15 @@ internal class SyncEngine(
                     }
                 }
             } catch (e: Exception) {
-                val status = markFailedOrGiveUp(
+                val status = retryEngine.markFailedOrGiveUp(
                     item = item,
                     error = e.message ?: "Unexpected sync error"
+                )
+
+                dispatchFailureEvent(
+                    item = item,
+                    error = e.message ?: "Unexpected sync error",
+                    status = status
                 )
 
                 if (status == SyncStatus.GIVE_UP) {
@@ -186,46 +199,7 @@ internal class SyncEngine(
         )
     }
 
-    private suspend fun markFailedOrGiveUp(
-        item: SyncQueueEntity,
-        error: String
-    ): SyncStatus {
-        val nextRetryCount = item.retryCount + 1
 
-        val finalStatus = if (nextRetryCount >= config.retryPolicy.maxRetryCount) {
-            SyncStatus.GIVE_UP
-        } else {
-            SyncStatus.FAILED
-        }
-
-        dao.markFailed(
-            id = item.id,
-            status = finalStatus,
-            error = error
-        )
-
-        log("Sync failed queueId=${item.id} status=$finalStatus retryCount=$nextRetryCount error=$error")
-
-        val event = if (finalStatus == SyncStatus.GIVE_UP) {
-            SyncEvent.GiveUp(
-                queueId = item.id,
-                entityName = item.entityName,
-                entityId = item.entityId,
-                error = error
-            )
-        } else {
-            SyncEvent.Failed(
-                queueId = item.id,
-                entityName = item.entityName,
-                entityId = item.entityId,
-                error = error
-            )
-        }
-
-        config.eventListener?.onEvent(event)
-
-        return finalStatus
-    }
 
     private suspend fun handleConflict(
         item: SyncQueueEntity,
@@ -338,5 +312,35 @@ internal class SyncEngine(
         )
 
         log("Old synced items cleared. retentionMinutes=${config.syncedItemRetentionMinutes}")
+    }
+
+    private val retryEngine = RetryEngine(
+        dao = dao,
+        retryPolicy = config.retryPolicy,
+        log = log
+    )
+
+    private fun dispatchFailureEvent(
+        item: SyncQueueEntity,
+        error: String,
+        status: SyncStatus
+    ) {
+        val event = if (status == SyncStatus.GIVE_UP) {
+            SyncEvent.GiveUp(
+                queueId = item.id,
+                entityName = item.entityName,
+                entityId = item.entityId,
+                error = error
+            )
+        } else {
+            SyncEvent.Failed(
+                queueId = item.id,
+                entityName = item.entityName,
+                entityId = item.entityId,
+                error = error
+            )
+        }
+
+        config.eventListener?.onEvent(event)
     }
 }
