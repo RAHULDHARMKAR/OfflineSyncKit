@@ -510,4 +510,102 @@ class OfflineSyncKit private constructor(
         config = config,
         log = ::log
     )
+
+
+    suspend fun <T : Any> enqueueObjects(
+        entityName: String,
+        items: List<T>,
+        operation: SyncOperation,
+        type: KClass<T>,
+        entityIdProvider: (T) -> String
+    ): List<Long> {
+        require(items.isNotEmpty()) {
+            "items must not be empty"
+        }
+
+        val serializer = config.serializerRegistry.get(type)
+            ?: error("No SyncSerializer registered for ${type.simpleName}")
+
+        return items.map { item ->
+            enqueueObject(
+                entityName = entityName,
+                entityId = entityIdProvider(item),
+                operation = operation,
+                entity = item,
+                serializer = serializer
+            )
+        }
+    }
+
+    suspend fun <T : Any> enqueueObjectsAndSyncIfOnline(
+        entityName: String,
+        items: List<T>,
+        operation: SyncOperation,
+        type: KClass<T>,
+        entityIdProvider: (T) -> String
+    ): List<Long> {
+        val ids = enqueueObjects(
+            entityName = entityName,
+            items = items,
+            operation = operation,
+            type = type,
+            entityIdProvider = entityIdProvider
+        )
+
+        if (!isSyncPaused && config.autoSyncWhenOnline && networkMonitor.isOnline()) {
+            scheduleAutoSync()
+        }
+
+        return ids
+    }
+
+    suspend fun <T : Any> enqueueObjects(
+        entityName: String,
+        items: List<T>,
+        operation: SyncOperation,
+        serializer: (T) -> String,
+        entityIdProvider: (T) -> String
+    ): List<Long> {
+        require(items.isNotEmpty()) {
+            "items must not be empty"
+        }
+
+        return items.map { item ->
+            enqueueObject(
+                entityName = entityName,
+                entityId = entityIdProvider(item),
+                operation = operation,
+                entity = item,
+                serializer = serializer
+            )
+        }
+    }
+
+    suspend fun <T : Any> enqueueObjectsAndSyncIfOnline(
+        entityName: String,
+        items: List<T>,
+        operation: SyncOperation,
+        serializer: (T) -> String,
+        entityIdProvider: (T) -> String
+    ): List<Long> {
+        val ids = enqueueObjects(
+            entityName = entityName,
+            items = items,
+            operation = operation,
+            serializer = serializer,
+            entityIdProvider = entityIdProvider
+        )
+
+        if (!isSyncPaused && config.autoSyncWhenOnline && networkMonitor.isOnline()) {
+            scheduleAutoSync()
+        }
+
+        return ids
+    }
+
+    suspend fun observeQueueSnapshot(): List<SyncQueueItem> {
+        return dao.getAllItems()
+            .map { it.toDomain() }
+    }
+
 }

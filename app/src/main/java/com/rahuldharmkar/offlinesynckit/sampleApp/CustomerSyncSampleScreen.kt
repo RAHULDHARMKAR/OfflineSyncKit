@@ -89,6 +89,41 @@ fun CustomerSyncSampleScreen(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 scope.launch {
+                    val customers = listOf(
+                        Customer(
+                            id = "batch_${System.currentTimeMillis()}_1",
+                            name = "Batch Customer 1",
+                            phone = "8888888881"
+                        ),
+                        Customer(
+                            id = "batch_${System.currentTimeMillis()}_2",
+                            name = "Batch Customer 2",
+                            phone = "8888888882"
+                        ),
+                        Customer(
+                            id = "batch_${System.currentTimeMillis()}_3",
+                            name = "Batch Customer 3",
+                            phone = "8888888883"
+                        )
+                    )
+
+                    syncKit.enqueueObjectsAndSyncIfOnline(
+                        entityName = "customer",
+                        items = customers,
+                        operation = SyncOperation.CREATE,
+                        type = Customer::class,
+                        entityIdProvider = { it.id }
+                    )
+                }
+            }
+        ) {
+            Text("Add Batch Customers")
+        }
+
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
                     syncKit.syncNow()
                 }
             }

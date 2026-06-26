@@ -174,5 +174,8 @@ internal interface SyncQueueDao {
         updatedAt: Long = System.currentTimeMillis()
     )
 
+    @Query("SELECT * FROM sync_queue ORDER BY createdAt ASC")
+    suspend fun getAllItems(): List<SyncQueueEntity>
+
 
 }
