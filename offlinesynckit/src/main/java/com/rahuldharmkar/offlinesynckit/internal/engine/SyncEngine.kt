@@ -184,7 +184,7 @@ internal class SyncEngine(
                 entityName = item.entityName,
                 entityId = item.entityId,
                 operation = item.operation,
-                payload = item.payload,
+                payload = encryptionEngine.decryptPayload(item.payload),
                 authToken = authToken,
                 headers = headers,
                 retryCount = item.retryCount,
@@ -255,5 +255,9 @@ internal class SyncEngine(
         dao = dao,
         config = config,
         log = log
+    )
+
+    private val encryptionEngine = EncryptionEngine(
+        encryptionProvider = config.encryptionProvider
     )
 }

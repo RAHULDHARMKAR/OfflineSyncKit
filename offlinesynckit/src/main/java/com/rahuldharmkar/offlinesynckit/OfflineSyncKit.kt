@@ -31,6 +31,7 @@ import kotlin.reflect.KClass
 import com.rahuldharmkar.offlinesynckit.internal.engine.SyncEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueQueryEngine
+import com.rahuldharmkar.offlinesynckit.internal.engine.EncryptionEngine
 
 class OfflineSyncKit private constructor(
     private val context: Context,
@@ -63,12 +64,14 @@ class OfflineSyncKit private constructor(
             operation = operation
         )
 
+        val encryptedPayload = encryptionEngine.encryptPayload(payload)
+
         val queueId = dao.insert(
             SyncQueueEntity(
                 entityName = entityName,
                 entityId = entityId,
                 operation = operation,
-                payload = payload
+                payload = encryptedPayload
             )
         )
 
@@ -619,5 +622,9 @@ class OfflineSyncKit private constructor(
     ): List<SyncQueueItem> {
         return queueQueryEngine.queryQueue(filter)
     }
+
+    private val encryptionEngine = EncryptionEngine(
+        encryptionProvider = config.encryptionProvider
+    )
 
 }
