@@ -15,26 +15,36 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.rahuldharmkar.offlinesynckit.OfflineSyncKit
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
+import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
+import com.rahuldharmkar.offlinesynckit.core.SyncQueueItem
 import com.rahuldharmkar.offlinesynckit.core.SyncStats
+import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import kotlinx.coroutines.launch
 
 @Composable
 fun CustomerSyncSampleScreen(
-    syncKit: com.rahuldharmkar.offlinesynckit.OfflineSyncKit
+    syncKit: OfflineSyncKit
 ) {
     val scope = rememberCoroutineScope()
+
+    var queryResults by remember {
+        mutableStateOf(emptyList<SyncQueueItem>())
+    }
 
     val queueItems by syncKit.observeQueue()
         .collectAsState(initial = emptyList())
 
     val stats by syncKit.observeStats()
         .collectAsState(
-            initial = com.rahuldharmkar.offlinesynckit.core.SyncStats(
+            initial = SyncStats(
                 pendingCount = 0,
                 syncingCount = 0,
                 syncedCount = 0,
@@ -89,19 +99,21 @@ fun CustomerSyncSampleScreen(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 scope.launch {
+                    val currentTime = System.currentTimeMillis()
+
                     val customers = listOf(
                         Customer(
-                            id = "batch_${System.currentTimeMillis()}_1",
+                            id = "batch_${currentTime}_1",
                             name = "Batch Customer 1",
                             phone = "8888888881"
                         ),
                         Customer(
-                            id = "batch_${System.currentTimeMillis()}_2",
+                            id = "batch_${currentTime}_2",
                             name = "Batch Customer 2",
                             phone = "8888888882"
                         ),
                         Customer(
-                            id = "batch_${System.currentTimeMillis()}_3",
+                            id = "batch_${currentTime}_3",
                             name = "Batch Customer 3",
                             phone = "8888888883"
                         )
@@ -129,6 +141,52 @@ fun CustomerSyncSampleScreen(
             }
         ) {
             Text("Manual Sync Now")
+        }
+
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
+                    queryResults = syncKit.queryQueue(
+                        SyncQueueFilter(
+                            status = SyncStatus.PENDING,
+                            entityName = "customer"
+                        )
+                    )
+                }
+            }
+        ) {
+            Text("Query Pending Customers")
+        }
+
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
+                    queryResults = syncKit.queryQueue(
+                        SyncQueueFilter(
+                            status = SyncStatus.FAILED
+                        )
+                    )
+                }
+            }
+        ) {
+            Text("Query Failed Items")
+        }
+
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
+                    queryResults = syncKit.queryQueue(
+                        SyncQueueFilter(
+                            status = SyncStatus.CONFLICT
+                        )
+                    )
+                }
+            }
+        ) {
+            Text("Query Conflicts")
         }
 
         OutlinedButton(
@@ -174,28 +232,44 @@ fun CustomerSyncSampleScreen(
         StatsCard(stats)
 
         Text(
+            text = "Query Results",
+            style = MaterialTheme.typography.titleMedium
+        )
+
+        queryResults.forEach { item ->
+            QueueItemCard(item)
+        }
+
+        Text(
             text = "Queue Items",
             style = MaterialTheme.typography.titleMedium
         )
 
         queueItems.forEach { item ->
-            Card(
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Column(
-                    modifier = Modifier.padding(12.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
-                ) {
-                    Text("Entity: ${item.entityName}")
-                    Text("ID: ${item.entityId}")
-                    Text("Operation: ${item.operation}")
-                    Text("Status: ${item.status}")
-                    Text("Retry Count: ${item.retryCount}")
+            QueueItemCard(item)
+        }
+    }
+}
 
-                    item.lastError?.let {
-                        Text("Error: $it")
-                    }
-                }
+@Composable
+private fun QueueItemCard(
+    item: SyncQueueItem
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text("Entity: ${item.entityName}")
+            Text("ID: ${item.entityId}")
+            Text("Operation: ${item.operation}")
+            Text("Status: ${item.status}")
+            Text("Retry Count: ${item.retryCount}")
+
+            item.lastError?.let {
+                Text("Error: $it")
             }
         }
     }
@@ -203,7 +277,7 @@ fun CustomerSyncSampleScreen(
 
 @Composable
 private fun StatsCard(
-    stats: com.rahuldharmkar.offlinesynckit.core.SyncStats
+    stats: SyncStats
 ) {
     Card(
         modifier = Modifier.fillMaxWidth()

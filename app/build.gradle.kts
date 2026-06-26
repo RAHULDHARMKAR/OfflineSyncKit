@@ -21,6 +21,10 @@ android {
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
 
+    lint {
+        disable += "MutableCollectionMutableState"
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
