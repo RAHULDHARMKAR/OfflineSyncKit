@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.rahuldharmkar.offlinesynckit.OfflineSyncKit
+import com.rahuldharmkar.offlinesynckit.core.QueueInspectionReport
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueItem
@@ -43,6 +44,10 @@ fun CustomerSyncSampleScreen(
 
     var healthReport by remember {
         mutableStateOf<SyncHealthReport?>(null)
+    }
+
+    var queueInspectionReport by remember {
+        mutableStateOf<QueueInspectionReport?>(null)
     }
 
     val queueItems by syncKit.observeQueue()
@@ -99,6 +104,17 @@ fun CustomerSyncSampleScreen(
             }
         ) {
             Text("Add Customer Offline")
+        }
+
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
+                    queueInspectionReport = syncKit.inspectQueue()
+                }
+            }
+        ) {
+            Text("Inspect Queue")
         }
 
         Button(
@@ -268,6 +284,10 @@ fun CustomerSyncSampleScreen(
             HealthReportCard(report)
         }
 
+        queueInspectionReport?.let { report ->
+            QueueInspectionCard(report)
+        }
+
         StatsCard(stats)
 
         Text(
@@ -310,6 +330,32 @@ private fun QueueItemCard(
             item.lastError?.let {
                 Text("Error: $it")
             }
+        }
+    }
+}
+
+@Composable
+private fun QueueInspectionCard(
+    report: QueueInspectionReport
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Queue Inspection",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Text("Pending: ${report.pendingItems.size}")
+            Text("Syncing: ${report.syncingItems.size}")
+            Text("Synced: ${report.syncedItems.size}")
+            Text("Failed: ${report.failedItems.size}")
+            Text("Conflict: ${report.conflictItems.size}")
+            Text("Give Up: ${report.giveUpItems.size}")
         }
     }
 }
