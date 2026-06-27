@@ -34,6 +34,9 @@ import com.rahuldharmkar.offlinesynckit.internal.engine.QueueQueryEngine
 import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
 import com.rahuldharmkar.offlinesynckit.core.SyncHealthReport
 import com.rahuldharmkar.offlinesynckit.internal.engine.HealthReportEngine
+import com.rahuldharmkar.offlinesynckit.core.SyncDiagnosticsSnapshot
+import com.rahuldharmkar.offlinesynckit.internal.engine.DiagnosticsEngine
+
 
 class OfflineSyncKit private constructor(
     private val context: Context,
@@ -643,6 +646,19 @@ class OfflineSyncKit private constructor(
             isSyncPaused = isSyncPaused
         )
     }
+
+    private val diagnosticsEngine = DiagnosticsEngine(
+        context = context,
+        dao = dao,
+        config = config
+    )
+
+    suspend fun getDiagnosticsSnapshot(): SyncDiagnosticsSnapshot {
+        return diagnosticsEngine.getDiagnosticsSnapshot(
+            isSyncPaused = isSyncPaused
+        )
+    }
+
 
 
 }
