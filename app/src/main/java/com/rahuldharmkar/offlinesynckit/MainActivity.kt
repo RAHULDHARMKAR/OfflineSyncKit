@@ -25,6 +25,7 @@ import com.rahuldharmkar.offlinesynckit.sampleApp.CustomerJsonSerializer
 import com.rahuldharmkar.offlinesynckit.SyncClient
 import com.rahuldharmkar.offlinesynckit.core.SyncAuthTokenProvider
 import com.rahuldharmkar.offlinesynckit.core.SyncHeaderProvider
+import com.rahuldharmkar.offlinesynckit.policy.network.WifiOnlySyncPolicy
 
 class MainActivity : ComponentActivity() {
 
@@ -82,6 +83,8 @@ class MainActivity : ComponentActivity() {
                     eventListener = SyncEventListener { event ->
                         Log.d("OfflineSyncEvent", event.toString())
                     },
+
+                    syncPolicy = WifiOnlySyncPolicy(),
 
                 )
             )

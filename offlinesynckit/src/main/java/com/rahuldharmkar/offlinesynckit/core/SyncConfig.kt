@@ -2,6 +2,8 @@ package com.rahuldharmkar.offlinesynckit.core
 
 import com.rahuldharmkar.offlinesynckit.security.NoOpSyncSignatureProvider
 import com.rahuldharmkar.offlinesynckit.security.SyncSignatureProvider
+import com.rahuldharmkar.offlinesynckit.policy.AlwaysSyncPolicy
+import com.rahuldharmkar.offlinesynckit.policy.SyncPolicy
 
 /**
  * Configuration object for OfflineSyncKit.
@@ -137,7 +139,15 @@ data class SyncConfig(
     /**
      * Provides optional custom headers for each sync request.
      */
-    val headerProvider: SyncHeaderProvider? = null
+    val headerProvider: SyncHeaderProvider? = null,
+
+    /**
+     * Policy used to decide whether synchronization is allowed to run.
+     *
+     * By default, [AlwaysSyncPolicy] allows sync whenever it is triggered.
+     */
+    val syncPolicy: SyncPolicy = AlwaysSyncPolicy,
+
 ) {
     init {
         require(syncBatchSize > 0) {

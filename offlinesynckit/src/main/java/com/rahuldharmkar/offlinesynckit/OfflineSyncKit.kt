@@ -129,6 +129,11 @@ class OfflineSyncKit private constructor(
             return SyncRunResult.empty()
         }
 
+        if (!config.syncPolicy.canSync(context)) {
+            log("Sync skipped because SyncPolicy does not allow sync")
+            return SyncRunResult.empty()
+        }
+
         if (syncMutex.isLocked) {
             log("Sync skipped because another sync is already running")
             return SyncRunResult.empty()
