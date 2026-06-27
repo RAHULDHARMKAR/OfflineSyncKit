@@ -3,7 +3,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Android-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-v1.3.0--dev-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.4.0--dev-blue.svg)
 
 A lightweight, production-ready Offline First Synchronization SDK for Android.
 
@@ -494,6 +494,47 @@ Encryption   Signature
 SyncApiAdapter
 
 ---
+
+## Sync Policies
+
+OfflineSyncKit allows you to control **when synchronization is allowed to execute**.
+
+### Always Sync (Default)
+
+```kotlin
+SyncConfig(
+    syncPolicy = AlwaysSyncPolicy
+)
+```
+
+### Wi-Fi Only
+
+```kotlin
+SyncConfig(
+    syncPolicy = WifiOnlySyncPolicy()
+)
+```
+
+### Charging Only
+
+```kotlin
+SyncConfig(
+    syncPolicy = ChargingOnlySyncPolicy()
+)
+```
+
+### Multiple Policies
+
+```kotlin
+SyncConfig(
+    syncPolicy = CompositeSyncPolicy.allOf(
+        WifiOnlySyncPolicy(),
+        ChargingOnlySyncPolicy()
+    )
+)
+```
+
+Synchronization will execute only when **all configured policies allow it**.
 
 # Roadmap
 
