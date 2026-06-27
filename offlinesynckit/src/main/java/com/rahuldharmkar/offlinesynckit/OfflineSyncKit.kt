@@ -32,6 +32,7 @@ import com.rahuldharmkar.offlinesynckit.internal.engine.SyncEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueQueryEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.EncryptionEngine
+import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
 
 class OfflineSyncKit private constructor(
     private val context: Context,
@@ -42,6 +43,8 @@ class OfflineSyncKit private constructor(
     private val dao = SyncDatabase.getInstance(context).syncQueueDao()
     private val networkMonitor = NetworkMonitor(context)
     private val syncMutex = Mutex()
+    private val securityManager = SyncSecurityManager(config)
+
 
     @Volatile
     private var isSyncPaused: Boolean = false
@@ -64,7 +67,7 @@ class OfflineSyncKit private constructor(
             operation = operation
         )
 
-        val encryptedPayload = encryptionEngine.encryptPayload(payload)
+        val encryptedPayload = securityManager.encrypt(payload)
 
         val queueId = dao.insert(
             SyncQueueEntity(
@@ -623,8 +626,5 @@ class OfflineSyncKit private constructor(
         return queueQueryEngine.queryQueue(filter)
     }
 
-    private val encryptionEngine = EncryptionEngine(
-        encryptionProvider = config.encryptionProvider
-    )
 
 }

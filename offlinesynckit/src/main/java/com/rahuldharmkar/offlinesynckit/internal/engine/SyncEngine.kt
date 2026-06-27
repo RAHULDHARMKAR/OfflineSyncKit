@@ -11,6 +11,7 @@ import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueDao
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
 import com.rahuldharmkar.offlinesynckit.internal.data.mapper.toDomain
+import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
 import java.util.concurrent.TimeUnit
 
 internal class SyncEngine(
@@ -178,14 +179,13 @@ internal class SyncEngine(
     ): SyncApiResult {
         val authToken = config.authTokenProvider?.getToken()
         val headers = config.headerProvider?.getHeaders().orEmpty()
-        val decryptedPayload = encryptionEngine.decryptPayload(item.payload)
-        val signature = config.signatureProvider.sign(decryptedPayload)
+        val decryptedPayload = securityManager.decrypt(item.payload)
 
-        val finalHeaders = if (signature.isNotBlank()) {
-            headers + ("X-Sync-Signature" to signature)
-        } else {
-            headers
-        }
+        val finalHeaders =
+            securityManager.createHeaders(
+                decryptedPayload,
+                headers
+            )
 
         return apiAdapter.sync(
             SyncRequest(
@@ -264,8 +264,7 @@ internal class SyncEngine(
         config = config,
         log = log
     )
+    private val securityManager = SyncSecurityManager(config)
 
-    private val encryptionEngine = EncryptionEngine(
-        encryptionProvider = config.encryptionProvider
-    )
+
 }
