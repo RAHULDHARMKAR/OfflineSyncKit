@@ -1,5 +1,6 @@
 package com.rahuldharmkar.offlinesynckit.sampleApp
 
+import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -203,6 +204,24 @@ fun CustomerSyncSampleScreen(
             }
         ) {
             Text("Query Conflicts")
+        }
+
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
+
+                    val report =
+                        syncKit.inspectQueue()
+
+                    Log.d(
+                        "QueueInspector",
+                        report.toString()
+                    )
+                }
+            }
+        ) {
+            Text("Inspect Queue")
         }
 
         OutlinedButton(

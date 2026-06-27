@@ -10,6 +10,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.rahuldharmkar.offlinesynckit.api.SyncApiAdapter
 import com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter
+import com.rahuldharmkar.offlinesynckit.core.QueueInspectionReport
 import com.rahuldharmkar.offlinesynckit.core.SyncConfig
 import com.rahuldharmkar.offlinesynckit.core.SyncDirection
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
@@ -36,6 +37,7 @@ import com.rahuldharmkar.offlinesynckit.core.SyncHealthReport
 import com.rahuldharmkar.offlinesynckit.internal.engine.HealthReportEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncDiagnosticsSnapshot
 import com.rahuldharmkar.offlinesynckit.internal.engine.DiagnosticsEngine
+import com.rahuldharmkar.offlinesynckit.internal.engine.QueueInspectorEngine
 
 
 class OfflineSyncKit private constructor(
@@ -659,6 +661,12 @@ class OfflineSyncKit private constructor(
         )
     }
 
+
+    private val queueInspectorEngine = QueueInspectorEngine(dao)
+
+    suspend fun inspectQueue(): QueueInspectionReport {
+        return queueInspectorEngine.inspectQueue()
+    }
 
 
 }
