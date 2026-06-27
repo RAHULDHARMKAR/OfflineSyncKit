@@ -5,6 +5,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
+import com.rahuldharmkar.offlinesynckit.core.SyncStats
 import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import kotlinx.coroutines.flow.Flow
 
@@ -192,6 +193,20 @@ internal interface SyncQueueDao {
         operation: SyncOperation?,
         limit: Int
     ): List<SyncQueueEntity>
+
+
+    @Query("""
+    SELECT
+        SUM(CASE WHEN status = 'PENDING' THEN 1 ELSE 0 END) AS pendingCount,
+        SUM(CASE WHEN status = 'SYNCING' THEN 1 ELSE 0 END) AS syncingCount,
+        SUM(CASE WHEN status = 'SYNCED' THEN 1 ELSE 0 END) AS syncedCount,
+        SUM(CASE WHEN status = 'FAILED' THEN 1 ELSE 0 END) AS failedCount,
+        SUM(CASE WHEN status = 'CONFLICT' THEN 1 ELSE 0 END) AS conflictCount,
+        SUM(CASE WHEN status = 'GIVE_UP' THEN 1 ELSE 0 END) AS giveUpCount,
+        COUNT(*) AS totalCount
+    FROM sync_queue
+""")
+    suspend fun observeStatsSnapshot(): SyncStats
 
 
 }

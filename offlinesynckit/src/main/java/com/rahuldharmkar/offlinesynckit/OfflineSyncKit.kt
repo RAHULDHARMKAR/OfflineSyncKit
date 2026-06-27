@@ -32,6 +32,8 @@ import com.rahuldharmkar.offlinesynckit.internal.engine.SyncEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueQueryEngine
 import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
+import com.rahuldharmkar.offlinesynckit.core.SyncHealthReport
+import com.rahuldharmkar.offlinesynckit.internal.engine.HealthReportEngine
 
 class OfflineSyncKit private constructor(
     private val context: Context,
@@ -628,6 +630,18 @@ class OfflineSyncKit private constructor(
         filter: SyncQueueFilter = SyncQueueFilter()
     ): List<SyncQueueItem> {
         return queueQueryEngine.queryQueue(filter)
+    }
+
+    private val healthReportEngine = HealthReportEngine(
+        context = context,
+        dao = dao,
+        config = config
+    )
+
+    suspend fun getHealthReport(): SyncHealthReport {
+        return healthReportEngine.getHealthReport(
+            isSyncPaused = isSyncPaused
+        )
     }
 
 

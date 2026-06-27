@@ -28,6 +28,7 @@ import com.rahuldharmkar.offlinesynckit.core.SyncQueueItem
 import com.rahuldharmkar.offlinesynckit.core.SyncStats
 import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import kotlinx.coroutines.launch
+import com.rahuldharmkar.offlinesynckit.core.SyncHealthReport
 
 @Composable
 fun CustomerSyncSampleScreen(
@@ -37,6 +38,10 @@ fun CustomerSyncSampleScreen(
 
     var queryResults by remember {
         mutableStateOf(emptyList<SyncQueueItem>())
+    }
+
+    var healthReport by remember {
+        mutableStateOf<SyncHealthReport?>(null)
     }
 
     val queueItems by syncKit.observeQueue()
@@ -163,6 +168,17 @@ fun CustomerSyncSampleScreen(
             modifier = Modifier.fillMaxWidth(),
             onClick = {
                 scope.launch {
+                    healthReport = syncKit.getHealthReport()
+                }
+            }
+        ) {
+            Text("Show Health Report")
+        }
+
+        OutlinedButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
                     queryResults = syncKit.queryQueue(
                         SyncQueueFilter(
                             status = SyncStatus.FAILED
@@ -229,6 +245,10 @@ fun CustomerSyncSampleScreen(
             Text("Clear Synced Items")
         }
 
+        healthReport?.let { report ->
+            HealthReportCard(report)
+        }
+
         StatsCard(stats)
 
         Text(
@@ -271,6 +291,36 @@ private fun QueueItemCard(
             item.lastError?.let {
                 Text("Error: $it")
             }
+        }
+    }
+}
+
+@Composable
+private fun HealthReportCard(
+    report: SyncHealthReport
+) {
+    Card(
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.padding(12.dp),
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(
+                text = "Sync Health Report",
+                style = MaterialTheme.typography.titleMedium
+            )
+
+            Text("Total Queue Items: ${report.totalQueueItems}")
+            Text("Pending: ${report.pendingCount}")
+            Text("Syncing: ${report.syncingCount}")
+            Text("Synced: ${report.syncedCount}")
+            Text("Failed: ${report.failedCount}")
+            Text("Conflict: ${report.conflictCount}")
+            Text("Give Up: ${report.giveUpCount}")
+            Text("Sync Paused: ${report.isSyncPaused}")
+            Text("Sync Direction: ${report.syncDirection}")
+            Text("Policy Allowed: ${report.isPolicyAllowed}")
         }
     }
 }
