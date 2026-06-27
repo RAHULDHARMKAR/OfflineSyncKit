@@ -1,12 +1,17 @@
 package com.rahuldharmkar.offlinesynckit.api
 
-interface SyncPullAdapter {
+import com.rahuldharmkar.offlinesynckit.core.SyncPullRequest
+import com.rahuldharmkar.offlinesynckit.core.SyncPullResult
 
-    suspend fun pull(): SyncPullResult
+/**
+ * Adapter responsible for pulling remote changes from the server.
+ */
+fun interface SyncPullAdapter {
+
+    /**
+     * Pulls remote changes from the backend.
+     */
+    suspend fun pull(
+        request: SyncPullRequest
+    ): SyncPullResult
 }
-
-data class SyncPullResult(
-    val success: Boolean,
-    val pulledCount: Int = 0,
-    val errorMessage: String? = null
-)

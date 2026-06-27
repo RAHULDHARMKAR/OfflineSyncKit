@@ -36,6 +36,7 @@ import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
 import com.rahuldharmkar.offlinesynckit.core.SyncHealthReport
 import com.rahuldharmkar.offlinesynckit.internal.engine.HealthReportEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncDiagnosticsSnapshot
+import com.rahuldharmkar.offlinesynckit.core.SyncPullRequest
 import com.rahuldharmkar.offlinesynckit.internal.engine.DiagnosticsEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueInspectorEngine
 
@@ -380,23 +381,39 @@ class OfflineSyncKit private constructor(
             }
     }
 
-    private suspend fun runPullSync(): Boolean {
-        val adapter = pullAdapter
-
-        if (adapter == null) {
-            log("Pull sync skipped because SyncPullAdapter is not provided")
-            return false
+    private suspend fun runPullSync(): SyncRunResult {
+        val adapter = pullAdapter ?: run {
+            log("Pull sync skipped because SyncPullAdapter is not configured")
+            return SyncRunResult.empty()
         }
 
-        val result = adapter.pull()
+        val request = SyncPullRequest(
+            tenantId = config.tenantProvider?.getTenantId(),
+            limit = config.syncBatchSize
+        )
 
-        return if (result.success) {
-            log("Pull sync success. pulledCount=${result.pulledCount}")
-            true
-        } else {
-            log("Pull sync failed. error=${result.errorMessage}")
-            false
+        val result = adapter.pull(request)
+
+        if (!result.success) {
+            log("Pull sync failed: ${result.errorMessage ?: "Unknown pull sync error"}")
+            return SyncRunResult(
+                totalProcessed = 0,
+                successCount = 0,
+                failedCount = 1,
+                conflictCount = 0,
+                giveUpCount = 0
+            )
         }
+
+        log("Pull sync success. pulledItems=${result.items.size} nextSyncToken=${result.nextSyncToken}")
+
+        return SyncRunResult(
+            totalProcessed = result.items.size,
+            successCount = result.items.size,
+            failedCount = 0,
+            conflictCount = 0,
+            giveUpCount = 0
+        )
     }
 
     /**

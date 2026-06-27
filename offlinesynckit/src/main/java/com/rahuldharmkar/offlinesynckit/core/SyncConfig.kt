@@ -148,6 +148,11 @@ data class SyncConfig(
      */
     val syncPolicy: SyncPolicy = AlwaysSyncPolicy,
 
+    /**
+     * Provides tenant information for multi-tenant synchronization.
+     */
+    val tenantProvider: SyncTenantProvider? = null,
+
 ) {
     init {
         require(syncBatchSize > 0) {
