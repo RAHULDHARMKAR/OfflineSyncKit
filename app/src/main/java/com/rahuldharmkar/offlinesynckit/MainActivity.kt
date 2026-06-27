@@ -5,7 +5,8 @@ import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 
-
+import com.rahuldharmkar.offlinesynckit.security.AesSyncEncryptionProvider
+import com.rahuldharmkar.offlinesynckit.security.DefaultSyncKeyProvider
 
 import com.rahuldharmkar.offlinesynckit.core.SyncConfig
 import com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution
@@ -56,6 +57,12 @@ class MainActivity : ComponentActivity() {
                         SyncConflictResolution.MarkManual
                     },
                     serializerRegistry = serializerRegistry,
+                    encryptionProvider = AesSyncEncryptionProvider(
+                        keyProvider = DefaultSyncKeyProvider(
+                            "12345678901234567890123456789012"
+                                .toByteArray(Charsets.UTF_8)
+                        )
+                    ),
                     authTokenProvider = SyncAuthTokenProvider {
                         "Bearer sample-token"
                     },
@@ -70,7 +77,8 @@ class MainActivity : ComponentActivity() {
                     },
                     eventListener = SyncEventListener { event ->
                         Log.d("OfflineSyncEvent", event.toString())
-                    }
+                    },
+
                 )
             )
             .build()
