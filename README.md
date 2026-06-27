@@ -144,7 +144,7 @@ Add dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.RAHULDHARMKAR:OfflineSyncKit:v1.3.0")
+    implementation("com.github.RAHULDHARMKAR:OfflineSyncKit:v1.4.0")
 }
 ```
 
