@@ -6,27 +6,34 @@ import android.net.NetworkCapabilities
 import com.rahuldharmkar.offlinesynckit.policy.SyncPolicy
 
 /**
- * A [SyncPolicy] that allows synchronization only when the device
- * is connected to a Wi-Fi network.
+ * Allows synchronization only when the active network
+ * is connected through Wi-Fi.
  *
- * Mobile data, Ethernet, VPN-only connections, or disconnected states
- * will prevent synchronization.
+ * Returns false when:
+ * - Device is offline
+ * - Mobile data is active
+ * - Ethernet is active
+ * - VPN without Wi-Fi
  */
 class WifiOnlySyncPolicy : SyncPolicy {
 
-    override fun canSync(context: Context): Boolean {
+    override fun canSync(
+        context: Context
+    ): Boolean {
 
         val connectivityManager =
-            context.getSystemService(ConnectivityManager::class.java)
-                ?: return false
+            context.getSystemService(
+                ConnectivityManager::class.java
+            ) ?: return false
 
-        val network =
+        val activeNetwork =
             connectivityManager.activeNetwork
                 ?: return false
 
         val capabilities =
-            connectivityManager.getNetworkCapabilities(network)
-                ?: return false
+            connectivityManager.getNetworkCapabilities(
+                activeNetwork
+            ) ?: return false
 
         return capabilities.hasTransport(
             NetworkCapabilities.TRANSPORT_WIFI
