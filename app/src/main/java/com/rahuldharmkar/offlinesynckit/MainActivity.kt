@@ -7,7 +7,7 @@ import androidx.activity.compose.setContent
 
 import com.rahuldharmkar.offlinesynckit.security.AesSyncEncryptionProvider
 import com.rahuldharmkar.offlinesynckit.security.DefaultSyncKeyProvider
-
+import com.rahuldharmkar.offlinesynckit.security.HmacSyncSignatureProvider
 import com.rahuldharmkar.offlinesynckit.core.SyncConfig
 import com.rahuldharmkar.offlinesynckit.core.SyncConflictResolution
 import com.rahuldharmkar.offlinesynckit.core.SyncConflictResolver
@@ -62,6 +62,10 @@ class MainActivity : ComponentActivity() {
                             "12345678901234567890123456789012"
                                 .toByteArray(Charsets.UTF_8)
                         )
+                    ),
+                    signatureProvider = HmacSyncSignatureProvider(
+                        secret = "sample-signing-secret"
+                            .toByteArray(Charsets.UTF_8)
                     ),
                     authTokenProvider = SyncAuthTokenProvider {
                         "Bearer sample-token"
