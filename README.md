@@ -297,8 +297,27 @@ val syncKit = SyncClient.Builder(applicationContext)
     )
     .build()
 ```
+---
 
+## Payload Signing
 
+OfflineSyncKit supports signing payloads before they are sent to the server.
+
+Payload signing helps backend APIs verify that the request payload was not modified before reaching the server.
+
+```kotlin
+val syncKit = SyncClient.Builder(applicationContext)
+    .apiAdapter(apiAdapter)
+    .config(
+        SyncConfig(
+            signatureProvider = HmacSyncSignatureProvider(
+                secret = "sample-signing-secret"
+                    .toByteArray(Charsets.UTF_8)
+            )
+        )
+    )
+    .build()
+```
 ---
 # Auto Sync
 
