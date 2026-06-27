@@ -1,5 +1,8 @@
 package com.rahuldharmkar.offlinesynckit.core
 
+import com.rahuldharmkar.offlinesynckit.security.NoOpSyncSignatureProvider
+import com.rahuldharmkar.offlinesynckit.security.SyncSignatureProvider
+
 /**
  * Configuration object for OfflineSyncKit.
  *
@@ -109,6 +112,17 @@ data class SyncConfig(
      * encryption solution.
      */
     val encryptionProvider: SyncEncryptionProvider = NoOpSyncEncryptionProvider,
+
+    /**
+     * Signature provider used to generate a payload signature before sync.
+     *
+     * The generated signature is added to [SyncRequest.headers] using
+     * the `X-Sync-Signature` header.
+     *
+     * By default, [NoOpSyncSignatureProvider] is used and no signature
+     * is generated.
+     */
+    val signatureProvider: SyncSignatureProvider = NoOpSyncSignatureProvider,
 
     /**
      * Interceptors that can observe or customize sync lifecycle behavior.

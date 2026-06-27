@@ -178,15 +178,23 @@ internal class SyncEngine(
     ): SyncApiResult {
         val authToken = config.authTokenProvider?.getToken()
         val headers = config.headerProvider?.getHeaders().orEmpty()
+        val decryptedPayload = encryptionEngine.decryptPayload(item.payload)
+        val signature = config.signatureProvider.sign(decryptedPayload)
+
+        val finalHeaders = if (signature.isNotBlank()) {
+            headers + ("X-Sync-Signature" to signature)
+        } else {
+            headers
+        }
 
         return apiAdapter.sync(
             SyncRequest(
                 entityName = item.entityName,
                 entityId = item.entityId,
                 operation = item.operation,
-                payload = encryptionEngine.decryptPayload(item.payload),
+                payload = decryptedPayload,
                 authToken = authToken,
-                headers = headers,
+                headers = finalHeaders,
                 retryCount = item.retryCount,
                 queuedAt = item.createdAt,
                 updatedAt = item.updatedAt,
