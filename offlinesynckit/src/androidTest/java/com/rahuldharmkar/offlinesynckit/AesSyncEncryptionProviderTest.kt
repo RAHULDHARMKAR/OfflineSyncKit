@@ -1,6 +1,6 @@
 package com.rahuldharmkar.offlinesynckit
 
-import com.rahuldharmkar.offlinesynckit.core.AesSyncEncryptionProvider
+import com.rahuldharmkar.offlinesynckit.security.AesSyncEncryptionProvider
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue

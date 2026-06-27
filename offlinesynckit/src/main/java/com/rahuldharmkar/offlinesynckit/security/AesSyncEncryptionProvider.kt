@@ -1,10 +1,11 @@
-package com.rahuldharmkar.offlinesynckit.core
+package com.rahuldharmkar.offlinesynckit.security
 
 import android.util.Base64
+import com.rahuldharmkar.offlinesynckit.core.SyncEncryptionProvider
 import java.security.SecureRandom
 import javax.crypto.Cipher
+import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 /**
  * AES-GCM based encryption provider for OfflineSyncKit payloads.
@@ -15,7 +16,7 @@ import javax.crypto.spec.SecretKeySpec
  * AES-GCM provides authenticated encryption, meaning it protects both
  * confidentiality and integrity of the encrypted payload.
  *
- * @param keyProvider Provider that supplies AES key material.
+ * @param keyProvider Provider that supplies a [SecretKey].
  */
 class AesSyncEncryptionProvider(
     private val keyProvider: SyncKeyProvider
@@ -28,7 +29,7 @@ class AesSyncEncryptionProvider(
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(
             Cipher.ENCRYPT_MODE,
-            createKeySpec(),
+            getSecretKey(),
             GCMParameterSpec(GCM_TAG_SIZE_BITS, iv)
         )
 
@@ -67,7 +68,7 @@ class AesSyncEncryptionProvider(
         val cipher = Cipher.getInstance(TRANSFORMATION)
         cipher.init(
             Cipher.DECRYPT_MODE,
-            createKeySpec(),
+            getSecretKey(),
             GCMParameterSpec(GCM_TAG_SIZE_BITS, iv)
         )
 
@@ -76,28 +77,12 @@ class AesSyncEncryptionProvider(
         return decryptedBytes.toString(Charsets.UTF_8)
     }
 
-    private fun createKeySpec(): SecretKeySpec {
-        val secretKey = keyProvider.getSecretKey()
-
-        require(
-            secretKey.size == AES_128_KEY_SIZE_BYTES ||
-                    secretKey.size == AES_192_KEY_SIZE_BYTES ||
-                    secretKey.size == AES_256_KEY_SIZE_BYTES
-        ) {
-            "AES secretKey must be 16, 24, or 32 bytes"
-        }
-
-        return SecretKeySpec(secretKey, AES)
+    private fun getSecretKey(): SecretKey {
+        return keyProvider.getSecretKey()
     }
 
     companion object {
-        private const val AES = "AES"
         private const val TRANSFORMATION = "AES/GCM/NoPadding"
-
-        private const val AES_128_KEY_SIZE_BYTES = 16
-        private const val AES_192_KEY_SIZE_BYTES = 24
-        private const val AES_256_KEY_SIZE_BYTES = 32
-
         private const val GCM_IV_SIZE_BYTES = 12
         private const val GCM_TAG_SIZE_BITS = 128
 
