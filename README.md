@@ -268,9 +268,38 @@ val result = syncKit.syncNow()
 println(result.successCount)
 println(result.failedCount)
 ```
-
 ---
 
+# Payload Encryption
+
+OfflineSyncKit supports encrypting queued payloads before they are stored in the local database.
+
+By default, payloads are stored as plain text using `NoOpSyncEncryptionProvider`.
+
+For applications handling sensitive information (such as healthcare, finance, CRM, or POS systems), you can enable AES-GCM encryption.
+
+Example:
+
+```kotlin
+val encryptionProvider = AesSyncEncryptionProvider(
+    keyProvider = DefaultSyncKeyProvider(
+        "12345678901234567890123456789012"
+            .toByteArray(Charsets.UTF_8)
+    )
+)
+
+val syncKit = SyncClient.Builder(applicationContext)
+    .apiAdapter(apiAdapter)
+    .config(
+        SyncConfig(
+            encryptionProvider = encryptionProvider
+        )
+    )
+    .build()
+```
+
+
+---
 # Auto Sync
 
 ```kotlin

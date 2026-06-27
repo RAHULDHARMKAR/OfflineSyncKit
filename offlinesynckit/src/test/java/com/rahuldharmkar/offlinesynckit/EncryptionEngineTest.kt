@@ -28,5 +28,7 @@ class EncryptionEngineTest {
 
         assertEquals("""encrypted:{"id":"1"}""", encrypted)
         assertEquals(payload, decrypted)
+
     }
+
 }
