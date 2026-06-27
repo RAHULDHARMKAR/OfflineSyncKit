@@ -475,39 +475,49 @@ This makes the SDK easy to extend without changing the public API.
 
 OfflineSyncKit uses:
 
-* Room Database
-* Kotlin Coroutines
-* Kotlin Flow
-* WorkManager
-* Offline Queue Architecture
+Application
+      │
+      ▼
+OfflineSyncKit
+      │
+      ▼
+SyncEngine
+      │
+      ▼
+SyncSecurityManager
+      │
+ ┌──────────────┐
+ ▼              ▼
+Encryption   Signature
+      │
+      ▼
+SyncApiAdapter
 
 ---
 
 # Roadmap
 
-### v1.2.x
-- Builder API
-- Enterprise Networking
-- SyncRequest
-- Authentication Provider
-- Header Provider
+## v1.4.x
 
-### v1.3.x
-- Payload Encryption
-- Secure Storage
-- Redacted Logging
+- Smart Sync Policies
+- Wi-Fi Only Sync
+- Charging Only Sync
+- Custom Sync Policies
 
-### v1.4.x
+## v1.5.x
+
 - Queue Inspector
 - Statistics Dashboard
 - Debug Utilities
 
-### v2.0.0
-- Push Sync
-- Pull Sync
-- Bidirectional Sync
+## v2.0.0
+
+- Push Synchronization
+- Pull Synchronization
+- Bidirectional Synchronization
 - Delta Synchronization
-- Conflict Merge Engine
+- Advanced Conflict Merge Engine
+- Multi-Tenant Synchronization
 
 
 
