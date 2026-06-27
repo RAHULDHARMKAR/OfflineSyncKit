@@ -3,7 +3,7 @@
 
 ![License](https://img.shields.io/badge/license-MIT-green.svg)
 ![Platform](https://img.shields.io/badge/platform-Android-brightgreen.svg)
-![Version](https://img.shields.io/badge/version-v1.2.0--dev-blue.svg)
+![Version](https://img.shields.io/badge/version-v1.3.0--dev-blue.svg)
 
 A lightweight, production-ready Offline First Synchronization SDK for Android.
 
@@ -144,7 +144,7 @@ Add dependency:
 
 ```kotlin
 dependencies {
-    implementation("com.github.RAHULDHARMKAR:OfflineSyncKit:v1.1.0")
+    implementation("com.github.RAHULDHARMKAR:OfflineSyncKit:v1.3.0")
 }
 ```
 
@@ -260,7 +260,11 @@ syncKit.enqueueObjectAndSyncIfOnline(
 )
 ```
 
-This keeps object sync cleaner and avoids repeating serialization logic across the app.# Manual Sync
+This keeps object sync cleaner and avoids repeating serialization logic across the app.
+
+---
+
+# Manual Sync
 
 ```kotlin
 val result = syncKit.syncNow()
