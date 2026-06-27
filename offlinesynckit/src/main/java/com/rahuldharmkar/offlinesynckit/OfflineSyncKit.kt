@@ -31,7 +31,6 @@ import kotlin.reflect.KClass
 import com.rahuldharmkar.offlinesynckit.internal.engine.SyncEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncQueueFilter
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueQueryEngine
-import com.rahuldharmkar.offlinesynckit.internal.engine.EncryptionEngine
 import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
 
 class OfflineSyncKit private constructor(
