@@ -6,7 +6,21 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning (SemV
 
 ---
 
-# [1.3.0] - 2026-06-27
+# [1.4.0] 
+
+## Added
+- SyncPolicy framework
+- AlwaysSyncPolicy
+- WifiOnlySyncPolicy
+- ChargingOnlySyncPolicy
+- CompositeSyncPolicy
+- Policy-based sync skipping
+
+## Improved
+- Sample app policy configuration
+- SyncConfig policy support
+
+# [1.3.0] 
 
 ## Added
 - Payload encryption support
@@ -21,7 +35,7 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning (SemV
 - Sample app security configuration
 - README security documentation
 
-# [1.2.0] - 2026-06-26
+# [1.2.0] 
 ---
 ## 🚀 Added
 
