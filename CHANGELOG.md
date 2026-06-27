@@ -6,8 +6,23 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning (SemV
 
 ---
 
-# [1.2.0] - 2026-06-26
+# [1.3.0] - 2026-06-27
 
+## Added
+- Payload encryption support
+- AES-GCM encryption provider
+- Key provider abstraction
+- Default sync key provider
+- HMAC-SHA256 payload signing
+- Signature header support using `X-Sync-Signature`
+
+## Improved
+- Security architecture
+- Sample app security configuration
+- README security documentation
+
+# [1.2.0] - 2026-06-26
+---
 ## 🚀 Added
 
 ### Queue Management
