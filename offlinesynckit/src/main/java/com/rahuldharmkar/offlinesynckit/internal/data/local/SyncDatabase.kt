@@ -7,14 +7,15 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 
 @Database(
-    entities = [SyncQueueEntity::class],
-    version = 1,
+    entities = [SyncQueueEntity::class, SyncStateEntity::class],
+    version = 2,
     exportSchema = false
 )
 @TypeConverters(SyncConverters::class)
 internal abstract class SyncDatabase : RoomDatabase() {
 
     abstract fun syncQueueDao(): SyncQueueDao
+    abstract fun syncStateDao(): SyncStateDao
 
     companion object {
         @Volatile

@@ -40,6 +40,7 @@ import com.rahuldharmkar.offlinesynckit.core.SyncPullRequest
 import com.rahuldharmkar.offlinesynckit.internal.engine.DiagnosticsEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.PullSyncEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueInspectorEngine
+import com.rahuldharmkar.offlinesynckit.internal.engine.SyncStateManager
 
 
 class OfflineSyncKit private constructor(
@@ -48,7 +49,16 @@ class OfflineSyncKit private constructor(
     private val pullAdapter: SyncPullAdapter?,
     private val config: SyncConfig,
 ) {
-    private val dao = SyncDatabase.getInstance(context).syncQueueDao()
+    private val syncDatabase =
+        SyncDatabase.getInstance(context)
+
+    private val dao =
+        syncDatabase.syncQueueDao()
+
+    private val syncStateManager =
+        SyncStateManager(
+            dao = syncDatabase.syncStateDao()
+        )
     private val networkMonitor = NetworkMonitor(context)
     private val syncMutex = Mutex()
     private val securityManager = SyncSecurityManager(config)
@@ -391,6 +401,7 @@ class OfflineSyncKit private constructor(
         val pullSyncEngine = PullSyncEngine(
             pullAdapter = adapter,
             dao = dao,
+            syncStateManager = syncStateManager,
             config = config,
             log = ::log
         )

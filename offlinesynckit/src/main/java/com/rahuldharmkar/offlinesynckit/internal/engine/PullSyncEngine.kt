@@ -11,13 +11,24 @@ import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
 internal class PullSyncEngine(
     private val pullAdapter: SyncPullAdapter,
     private val dao: SyncQueueDao,
+    private val syncStateManager: SyncStateManager,
     private val config: SyncConfig,
     private val log: (String) -> Unit
 ) {
 
+
+
     suspend fun pull(): SyncPullResult {
+
+        val tenantId = config.tenantProvider?.getTenantId()
+
+        val lastSyncToken = syncStateManager.getLastSyncToken(
+            tenantId = tenantId
+        )
+
         val request = SyncPullRequest(
-            tenantId = config.tenantProvider?.getTenantId(),
+            lastSyncToken = lastSyncToken,
+            tenantId = tenantId,
             limit = config.syncBatchSize
         )
 
@@ -30,7 +41,14 @@ internal class PullSyncEngine(
             return result
         }
 
+        // Persist server changes locally
         persistPulledItems(result)
+
+        // Save the new sync token ONLY after persistence succeeds
+        syncStateManager.saveLastSyncToken(
+            tenantId = tenantId,
+            token = result.nextSyncToken
+        )
 
         log(
             "Pull sync success. items=${result.items.size} nextSyncToken=${result.nextSyncToken}"
