@@ -534,32 +534,67 @@ SyncConfig(
 )
 ```
 
-Synchronization will execute only when **all configured policies allow it**.
+# Bidirectional Synchronization
 
-# Roadmap
-
-## v1.4.x
-
-- Smart Sync Policies
-- Wi-Fi Only Sync
-- Charging Only Sync
-- Custom Sync Policies
-
-## v1.5.x
-
-- Queue Inspector
-- Statistics Dashboard
-- Debug Utilities
-
-## v2.0.0
+OfflineSyncKit supports:
 
 - Push Synchronization
 - Pull Synchronization
 - Bidirectional Synchronization
-- Delta Synchronization
-- Advanced Conflict Merge Engine
-- Multi-Tenant Synchronization
 
+Configure using:
+
+```kotlin
+SyncConfig(
+    syncDirection = SyncDirection.BOTH
+)
+```
+
+Provide a pull adapter:
+
+```kotlin
+SyncClient.Builder(context)
+    .apiAdapter(pushAdapter)
+    .pullAdapter(pullAdapter)
+```
+
+Receive pulled data:
+
+```kotlin
+SyncConfig(
+    pullDataHandler = SyncPullDataHandler { items ->
+        // Apply items to your own Room database
+    }
+)
+```
+
+OfflineSyncKit automatically:
+
+- Stores pulled items
+- Updates sync tokens
+- Supports delta synchronization
+- Supports multi-tenant synchronization
+
+Synchronization will execute only when **all configured policies allow it**.
+
+# Roadmap
+
+## v2.1.0
+- Advanced Conflict Merge Engine
+- JSON Merge Strategies
+- Field-level Merge
+- Conflict Reports
+
+## v2.2.0
+- Remote Entity Cache
+- Selective Entity Sync
+- Sync Scheduler
+- Background Pull Improvements
+
+## v3.0.0
+- WebSocket / Realtime Sync
+- Live Change Streams
+- Offline Collaboration
 
 
 # License

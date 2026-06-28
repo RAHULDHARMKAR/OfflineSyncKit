@@ -165,6 +165,17 @@ fun CustomerSyncSampleScreen(
             Text("Manual Sync Now")
         }
 
+        Button(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = {
+                scope.launch {
+                    syncKit.syncNow()
+                }
+            }
+        ) {
+            Text("Run Bidirectional Sync")
+        }
+
         OutlinedButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = {

@@ -24,10 +24,14 @@ import com.rahuldharmkar.offlinesynckit.sampleApp.Customer
 import com.rahuldharmkar.offlinesynckit.sampleApp.CustomerJsonSerializer
 import com.rahuldharmkar.offlinesynckit.SyncClient
 import com.rahuldharmkar.offlinesynckit.core.SyncAuthTokenProvider
+import com.rahuldharmkar.offlinesynckit.core.SyncDirection
 import com.rahuldharmkar.offlinesynckit.core.SyncHeaderProvider
+import com.rahuldharmkar.offlinesynckit.core.SyncPullDataHandler
+import com.rahuldharmkar.offlinesynckit.core.SyncTenantProvider
 import com.rahuldharmkar.offlinesynckit.policy.composite.CompositeSyncPolicy
 import com.rahuldharmkar.offlinesynckit.policy.device.ChargingOnlySyncPolicy
 import com.rahuldharmkar.offlinesynckit.policy.network.WifiOnlySyncPolicy
+import com.rahuldharmkar.offlinesynckit.sampleApp.FakeCustomerPullAdapter
 
 class MainActivity : ComponentActivity() {
 
@@ -47,6 +51,9 @@ class MainActivity : ComponentActivity() {
 
         syncKit = SyncClient.Builder(applicationContext)
             .apiAdapter(FakeCustomerApiAdapter())
+            .pullAdapter(
+                FakeCustomerPullAdapter()
+            )
             .config(
                 SyncConfig(
                     retryPolicy = SyncRetryPolicy(maxRetryCount = 3),
@@ -90,6 +97,19 @@ class MainActivity : ComponentActivity() {
                         WifiOnlySyncPolicy(),
                         ChargingOnlySyncPolicy()
                     ),
+
+                    syncDirection = SyncDirection.BOTH,
+
+                    tenantProvider = SyncTenantProvider {
+                        "sample-tenant"
+                    },
+
+                    pullDataHandler = SyncPullDataHandler { items ->
+                        Log.d(
+                            "OfflineSyncKit",
+                            "Received ${items.size} pulled items"
+                        )
+                    }
 
                 )
             )

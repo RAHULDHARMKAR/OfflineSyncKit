@@ -118,22 +118,31 @@ The format is inspired by Keep a Changelog and follows Semantic Versioning (SemV
 
 ---
 
-# [1.1.0] - 2026-06-19
+# [2.0.0] - 2026-06-28
 
 ## Added
-
-- Builder API foundation
-- SyncRequest model
-- Serializer Registry
-- Enterprise networking support
-
----
+- Pull synchronization
+- Bidirectional synchronization
+- PullSyncEngine
+- BidirectionalSyncEngine
+- SyncPullAdapter
+- SyncPullRequest
+- SyncPullResult
+- SyncPulledItem
+- SyncPullDataHandler
+- SyncTenantProvider
+- Delta sync token support
+- Delta timestamp support
+- Sync state token storage
+- Multi-tenant queue storage
+- Tenant-aware queue filtering
 
 ## Improved
+- Pull item persistence
+- Encrypted pulled item storage
+- Sample app bidirectional sync demo
+- Tenant-aware sync architecture
 
-- Generic object synchronization
-- Sample application
-- README
 
 ---
 
