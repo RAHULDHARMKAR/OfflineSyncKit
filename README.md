@@ -16,7 +16,7 @@ Whether you're building a POS system, healthcare application, CRM, inventory sol
 ![Platform](https://img.shields.io/badge/platform-Android-brightgreen.svg)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.x-blueviolet.svg)
 ![Min SDK](https://img.shields.io/badge/minSdk-24-orange.svg)
-![Version](https://img.shields.io/badge/version-v2.0.0-blue.svg)
+![Version](https://img.shields.io/badge/version-v2.0.1-blue.svg)
 ![JitPack](https://img.shields.io/badge/JitPack-Available-success.svg)
 
 ---
