@@ -37,6 +37,7 @@ import com.rahuldharmkar.offlinesynckit.core.SyncHealthReport
 import com.rahuldharmkar.offlinesynckit.internal.engine.HealthReportEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncDiagnosticsSnapshot
 import com.rahuldharmkar.offlinesynckit.core.SyncPullRequest
+import com.rahuldharmkar.offlinesynckit.internal.engine.BidirectionalSyncEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.DiagnosticsEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.PullSyncEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueInspectorEngine
@@ -161,24 +162,18 @@ class OfflineSyncKit private constructor(
         }
 
         return syncMutex.withLock {
-            when (config.syncDirection) {
-                SyncDirection.PUSH -> {
-                    log("Running PUSH sync")
-                }
-
-                SyncDirection.PULL -> {
-                    log("Running PULL sync")
+            val bidirectionalSyncEngine = BidirectionalSyncEngine(
+                push = {
+                    syncEngine.syncNow(limit)
+                },
+                pull = {
                     runPullSync()
-                    return@withLock SyncRunResult.empty()
-                }
+                },
+                config = config,
+                log = ::log
+            )
 
-                SyncDirection.BOTH -> {
-                    log("Running BOTH sync. Pull first, then push.")
-                    runPullSync()
-                }
-            }
-
-            syncEngine.syncNow(limit)
+            bidirectionalSyncEngine.sync()
         }
     }
 
