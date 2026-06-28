@@ -208,7 +208,22 @@ internal interface SyncQueueDao {
 """)
     suspend fun observeStatsSnapshot(): SyncStats
 
-
+    @Query("""
+    SELECT * FROM sync_queue
+    WHERE (:status IS NULL OR status = :status)
+      AND (:entityName IS NULL OR entityName = :entityName)
+      AND (:operation IS NULL OR operation = :operation)
+      AND (:tenantId IS NULL OR tenantId = :tenantId)
+    ORDER BY createdAt ASC
+    LIMIT :limit
+""")
+    suspend fun queryQueue(
+        status: SyncStatus?,
+        entityName: String?,
+        operation: SyncOperation?,
+        tenantId: String?,
+        limit: Int
+    ): List<SyncQueueEntity>
 
 
 }

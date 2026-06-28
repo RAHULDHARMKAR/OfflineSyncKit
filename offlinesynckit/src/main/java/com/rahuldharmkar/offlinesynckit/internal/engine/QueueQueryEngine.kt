@@ -16,6 +16,7 @@ internal class QueueQueryEngine(
             status = filter.status,
             entityName = filter.entityName,
             operation = filter.operation,
+            tenantId = filter.tenantId,
             limit = filter.limit
         ).map { entity ->
             entity.toDomain()
