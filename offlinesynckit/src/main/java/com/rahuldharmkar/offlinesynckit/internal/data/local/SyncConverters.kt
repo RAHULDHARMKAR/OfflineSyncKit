@@ -4,17 +4,29 @@ import androidx.room.TypeConverter
 import com.rahuldharmkar.offlinesynckit.core.SyncOperation
 import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 
-internal class SyncConverters {
+class SyncConverters {
 
     @TypeConverter
-    fun fromOperation(value: SyncOperation): String = value.name
+    fun fromOperation(value: SyncOperation?): String? {
+        return value?.name
+    }
 
     @TypeConverter
-    fun toOperation(value: String): SyncOperation = com.rahuldharmkar.offlinesynckit.core.SyncOperation.valueOf(value)
+    fun toOperation(value: String?): SyncOperation? {
+        return value?.let {
+            SyncOperation.valueOf(it)
+        }
+    }
 
     @TypeConverter
-    fun fromStatus(value: SyncStatus): String = value.name
+    fun fromStatus(value: SyncStatus?): String? {
+        return value?.name
+    }
 
     @TypeConverter
-    fun toStatus(value: String): SyncStatus = com.rahuldharmkar.offlinesynckit.core.SyncStatus.valueOf(value)
+    fun toStatus(value: String?): SyncStatus? {
+        return value?.let {
+            SyncStatus.valueOf(it)
+        }
+    }
 }
