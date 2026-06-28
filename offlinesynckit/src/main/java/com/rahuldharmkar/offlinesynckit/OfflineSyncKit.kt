@@ -390,6 +390,7 @@ class OfflineSyncKit private constructor(
 
         val pullSyncEngine = PullSyncEngine(
             pullAdapter = adapter,
+            dao = dao,
             config = config,
             log = ::log
         )

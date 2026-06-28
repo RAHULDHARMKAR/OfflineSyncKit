@@ -4,9 +4,13 @@ import com.rahuldharmkar.offlinesynckit.api.SyncPullAdapter
 import com.rahuldharmkar.offlinesynckit.core.SyncConfig
 import com.rahuldharmkar.offlinesynckit.core.SyncPullRequest
 import com.rahuldharmkar.offlinesynckit.core.SyncPullResult
+import com.rahuldharmkar.offlinesynckit.core.SyncStatus
+import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueDao
+import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
 
 internal class PullSyncEngine(
     private val pullAdapter: SyncPullAdapter,
+    private val dao: SyncQueueDao,
     private val config: SyncConfig,
     private val log: (String) -> Unit
 ) {
@@ -21,16 +25,35 @@ internal class PullSyncEngine(
 
         val result = pullAdapter.pull(request)
 
-        if (result.success) {
-            log(
-                "Pull sync success. items=${result.items.size} nextSyncToken=${result.nextSyncToken}"
-            )
-        } else {
-            log(
-                "Pull sync failed. error=${result.errorMessage ?: "Unknown pull sync error"}"
-            )
+        if (!result.success) {
+            log("Pull sync failed. error=${result.errorMessage ?: "Unknown pull sync error"}")
+            return result
         }
 
+        persistPulledItems(result)
+
+        log(
+            "Pull sync success. items=${result.items.size} nextSyncToken=${result.nextSyncToken}"
+        )
+
         return result
+    }
+
+    private suspend fun persistPulledItems(
+        result: SyncPullResult
+    ) {
+        result.items.forEach { item ->
+            dao.insert(
+                SyncQueueEntity(
+                    entityName = item.entityName,
+                    entityId = item.entityId,
+                    operation = item.operation,
+                    payload = item.payload,
+                    status = SyncStatus.SYNCED,
+                    createdAt = item.updatedAt,
+                    updatedAt = item.updatedAt
+                )
+            )
+        }
     }
 }
