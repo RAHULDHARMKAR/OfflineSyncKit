@@ -402,6 +402,7 @@ class OfflineSyncKit private constructor(
             pullAdapter = adapter,
             dao = dao,
             syncStateManager = syncStateManager,
+            securityManager = securityManager,
             config = config,
             log = ::log
         )

@@ -7,20 +7,25 @@ import com.rahuldharmkar.offlinesynckit.core.SyncPullResult
 import com.rahuldharmkar.offlinesynckit.core.SyncStatus
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueDao
 import com.rahuldharmkar.offlinesynckit.internal.data.local.SyncQueueEntity
+import com.rahuldharmkar.offlinesynckit.security.SyncSecurityManager
 
 internal class PullSyncEngine(
     private val pullAdapter: SyncPullAdapter,
     private val dao: SyncQueueDao,
     private val syncStateManager: SyncStateManager,
     private val config: SyncConfig,
-    private val log: (String) -> Unit
-) {
+    private val log: (String) -> Unit,
+    private val securityManager: SyncSecurityManager,
+
+    ) {
 
 
 
     suspend fun pull(): SyncPullResult {
 
         val tenantId = config.tenantProvider?.getTenantId()
+
+
 
         val lastSyncToken = syncStateManager.getLastSyncToken(
             tenantId = tenantId
@@ -66,7 +71,7 @@ internal class PullSyncEngine(
                     entityName = item.entityName,
                     entityId = item.entityId,
                     operation = item.operation,
-                    payload = item.payload,
+                    payload = securityManager.encrypt(item.payload),
                     status = SyncStatus.SYNCED,
                     createdAt = item.updatedAt,
                     updatedAt = item.updatedAt
