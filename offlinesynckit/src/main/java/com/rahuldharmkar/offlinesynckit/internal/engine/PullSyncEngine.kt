@@ -60,6 +60,10 @@ internal class PullSyncEngine(
         // Persist server changes locally
         persistPulledItems(result)
 
+        config.pullDataHandler?.onItemsPulled(
+            result.items
+        )
+
         // Save the new sync token ONLY after persistence succeeds
         syncStateManager.saveLastSyncToken(
             tenantId = tenantId,

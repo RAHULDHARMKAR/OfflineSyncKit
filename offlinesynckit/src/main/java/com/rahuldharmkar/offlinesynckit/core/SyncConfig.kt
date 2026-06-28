@@ -153,6 +153,14 @@ data class SyncConfig(
      */
     val tenantProvider: SyncTenantProvider? = null,
 
+    /**
+     * Optional handler invoked when remote items are pulled successfully.
+     *
+     * Apps can use this callback to apply pulled items to their own
+     * local database, cache, or repository layer.
+     */
+    val pullDataHandler: SyncPullDataHandler? = null,
+
 ) {
     init {
         require(syncBatchSize > 0) {
