@@ -70,7 +70,7 @@ class OfflineSyncKit private constructor(
     suspend fun enqueue(
         entityName: String,
         entityId: String,
-        operation: com.rahuldharmkar.offlinesynckit.core.SyncOperation,
+        operation: SyncOperation,
         payload: String
     ): Long {
         SyncValidator.validateEnqueueInput(
@@ -92,8 +92,10 @@ class OfflineSyncKit private constructor(
                 entityName = entityName,
                 entityId = entityId,
                 operation = operation,
-                payload = encryptedPayload
+                payload = encryptedPayload,
+                tenantId = config.tenantProvider?.getTenantId()
             )
+
         )
 
         log("Enqueued item queueId=$queueId entityName=$entityName entityId=$entityId operation=$operation")

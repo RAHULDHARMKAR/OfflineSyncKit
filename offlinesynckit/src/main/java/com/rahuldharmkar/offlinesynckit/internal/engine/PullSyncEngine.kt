@@ -72,6 +72,7 @@ internal class PullSyncEngine(
                     entityId = item.entityId,
                     operation = item.operation,
                     payload = securityManager.encrypt(item.payload),
+                    tenantId = item.tenantId ?: config.tenantProvider?.getTenantId(),
                     status = SyncStatus.SYNCED,
                     createdAt = item.updatedAt,
                     updatedAt = item.updatedAt

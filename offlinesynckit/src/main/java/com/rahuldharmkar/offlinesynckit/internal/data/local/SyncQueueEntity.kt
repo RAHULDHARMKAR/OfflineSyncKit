@@ -15,11 +15,12 @@ internal data class SyncQueueEntity(
 
     val operation: SyncOperation,
     val payload: String,
-
+    val tenantId: String? = null,
     val status: com.rahuldharmkar.offlinesynckit.core.SyncStatus = com.rahuldharmkar.offlinesynckit.core.SyncStatus.PENDING,
     val retryCount: Int = 0,
     val lastError: String? = null,
 
     val createdAt: Long = System.currentTimeMillis(),
-    val updatedAt: Long = System.currentTimeMillis()
+    val updatedAt: Long = System.currentTimeMillis(),
+
 )

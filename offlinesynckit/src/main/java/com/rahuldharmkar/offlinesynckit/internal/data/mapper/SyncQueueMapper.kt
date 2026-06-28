@@ -9,6 +9,7 @@ internal fun SyncQueueEntity.toDomain(): com.rahuldharmkar.offlinesynckit.core.S
         entityName = entityName,
         entityId = entityId,
         operation = operation,
+        tenantId = tenantId,
         status = status,
         retryCount = retryCount,
         lastError = lastError,
