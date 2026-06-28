@@ -31,13 +31,24 @@ internal class PullSyncEngine(
             tenantId = tenantId
         )
 
+        val lastPulledAt = syncStateManager.getLastPulledAt(
+            tenantId = tenantId
+        )
+
         val request = SyncPullRequest(
             lastSyncToken = lastSyncToken,
+            updatedAfter = lastPulledAt,
             tenantId = tenantId,
             limit = config.syncBatchSize
         )
 
-        log("Pull sync started. tenantId=${request.tenantId} limit=${request.limit}")
+        log(
+            "Pull sync started. tenantId=${request.tenantId} " +
+                    "lastSyncToken=${request.lastSyncToken} " +
+                    "updatedAfter=${request.updatedAfter} " +
+                    "limit=${request.limit}"
+        )
+
 
         val result = pullAdapter.pull(request)
 

@@ -38,4 +38,12 @@ internal class SyncStateManager(
     private companion object {
         private const val DEFAULT_TENANT_KEY = "default"
     }
+
+    suspend fun getLastPulledAt(
+        tenantId: String?
+    ): Long? {
+        return dao.getState(keyForTenant(tenantId))
+            ?.lastPulledAt
+    }
+
 }
