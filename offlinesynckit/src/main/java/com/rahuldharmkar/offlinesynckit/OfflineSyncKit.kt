@@ -38,6 +38,7 @@ import com.rahuldharmkar.offlinesynckit.internal.engine.HealthReportEngine
 import com.rahuldharmkar.offlinesynckit.core.SyncDiagnosticsSnapshot
 import com.rahuldharmkar.offlinesynckit.core.SyncPullRequest
 import com.rahuldharmkar.offlinesynckit.internal.engine.DiagnosticsEngine
+import com.rahuldharmkar.offlinesynckit.internal.engine.PullSyncEngine
 import com.rahuldharmkar.offlinesynckit.internal.engine.QueueInspectorEngine
 
 
@@ -387,15 +388,15 @@ class OfflineSyncKit private constructor(
             return SyncRunResult.empty()
         }
 
-        val request = SyncPullRequest(
-            tenantId = config.tenantProvider?.getTenantId(),
-            limit = config.syncBatchSize
+        val pullSyncEngine = PullSyncEngine(
+            pullAdapter = adapter,
+            config = config,
+            log = ::log
         )
 
-        val result = adapter.pull(request)
+        val result = pullSyncEngine.pull()
 
         if (!result.success) {
-            log("Pull sync failed: ${result.errorMessage ?: "Unknown pull sync error"}")
             return SyncRunResult(
                 totalProcessed = 0,
                 successCount = 0,
@@ -404,8 +405,6 @@ class OfflineSyncKit private constructor(
                 giveUpCount = 0
             )
         }
-
-        log("Pull sync success. pulledItems=${result.items.size} nextSyncToken=${result.nextSyncToken}")
 
         return SyncRunResult(
             totalProcessed = result.items.size,
